@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Miau Miau Burgers & Espetinhos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <div class="header-area">
+    <div class="marca">
+      <img src="img/logo.jpg" alt="Logo Miau Miau">
+      Miau Miau
+    </div>
+    <nav>
+      <ul>
+        <li><a href="#sobre">Sobre</a></li>
+        <li><a href="#cardapio">Cardápio</a></li>
+        <li><a href="#combo">Combo</a></li>
+        <li><a href="#local">Onde estamos</a></li>
+      </ul>
+    </nav>
+    <div class="header-cta">
+      <a class="btn btn-principal" id="btn-whatsapp-header" href="#" style="padding:10px 22px;font-size:13px;">Pedir no Whatsapp</a>
+      <button class="menu-hamburguer" aria-label="abrir menu"><span></span><span></span><span></span></button>
+    </div>
+  </div>
+</header>
+
+<!-- ===== HERO ===== -->
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="hero-eyebrow">Sua Cidade • Burgers & Espetinhos</span>
+      <h1>MIAU<br><span class="laranja">MIAU</span></h1>
+      <div class="hero-sub">Burgers & Espetinhos</div>
+      <p class="hero-texto">
+        Hambúrguer e espetinho feito na hora, no carvão. Sem enrolação.
+      </p>
+      <div class="hero-botoes">
+        <a href="#cardapio" class="btn btn-principal">Ver Cardápio</a>
+        <a href="#local" class="btn btn-fora">Onde Estamos</a>
+      </div>
+    </div>
+    <div class="hero-imagem">
+      <div class="anel">
+        <img src="img/logo.jpg" alt="Mascote Miau Miau">
+      </div>
+    </div>
+  </div>
+  <div class="scroll-aviso">
+    ver cardápio
+    <svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg>
+  </div>
+</section>
+
+<!-- sprite da pegada, usado em varios lugares do site -->
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="svg-pegada" viewBox="0 0 64 64">
+    <ellipse cx="32" cy="42" rx="16" ry="13"/>
+    <ellipse cx="14" cy="20" rx="7" ry="9"/>
+    <ellipse cx="30" cy="12" rx="7" ry="9"/>
+    <ellipse cx="46" cy="14" rx="7" ry="9"/>
+    <ellipse cx="56" cy="26" rx="6" ry="8"/>
+  </symbol>
+</svg>
+
+<div class="trilha reveal">
+  <svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg>
+  <svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg>
+  <svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg>
+  <svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg>
+</div>
+
+<!-- ===== SOBRE ===== -->
+<section class="sobre" id="sobre">
+  <div class="container">
+    <span class="eyebrow reveal">Nossa História</span>
+    <h2 class="titulo-secao reveal">De onde vem o <span>Miau Miau</span></h2>
+    <div class="sobre-grid reveal">
+      <div class="sobre-foto">
+        📸 Foto da fachada
+      </div>
+      <div class="sobre-texto">
+        <p>
+          Hoje o Miau Miau é point de quem gosta de
+          hambúrguer bom e espetinho na brasa.
+        </p>
+        <p>Carne boa, tempero certo e ponto de brasa que só sai com prática. Sem enrolação, do jeito que tem que ser.</p>
+        <ul class="selo-lista">
+          <li><svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg> Carne 100% fresca, sem misturas</li>
+          <li><svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg> Pão e molhos feitos na casa</li>
+          <li><svg class="pegada" viewBox="0 0 64 64"><use href="#svg-pegada"/></svg> Espetinhos na brasa, na hora do pedido</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CARDAPIO ===== -->
+<section class="cardapio" id="cardapio">
+  <div class="container">
+    <span class="eyebrow reveal">O que vai pedir?</span>
+    <h2 class="titulo-secao reveal">Nosso <span>Cardápio</span></h2>
+
+    <div class="abas reveal">
+      <button class="aba-btn ativa" data-aba="burgers">🍔 Burgers</button>
+      <button class="aba-btn" data-aba="espetinhos">🍢 Espetinhos</button>
+    </div>
+
+    <div class="grade-cardapio reveal">
+
+      <div class="grupo-pratos ativo" id="burgers">
+        <p style="color:var(--creme-fraco);font-size:14px;">Carregando cardápio...</p>
+      </div>
+
+      <div class="grupo-pratos" id="espetinhos">
+        <p style="color:var(--creme-fraco);font-size:14px;">Carregando cardápio...</p>
+      </div>
+
+    </div>
+
+  </div>
+</section>
+
+<!-- ===== COMBO DESTAQUE ===== -->
+<section class="combo" id="combo">
+  <div class="combo-banner reveal">
+    <div>
+      <span class="combo-eyebrow">Combo da Casa</span>
+      <h3>Combo do Gato 🐾</h3>
+      <p>1 Clássico Miau + batata frita + 2 espetinhos à escolha + refrigerante. Bom pra duas pessoas.</p>
+    </div>
+    <div class="combo-preco">R$ 49,90<small>por pessoa</small></div>
+  </div>
+</section>
+
+<!-- ===== DEPOIMENTOS ===== -->
+<section class="depoimentos">
+  <div class="container">
+    <span class="eyebrow reveal">Quem já provou</span>
+    <h2 class="titulo-secao reveal">O que <span>falam</span> da gente</h2>
+    <div class="grade-depo reveal">
+      <div class="depo-card">
+        <div class="estrelas">★★★★★</div>
+        <p class="depo-texto">"Melhor espetinho da região, sempre na brasa certinha. Virou programa de toda sexta."</p>
+        <div class="depo-nome">— Ana Souza</div>
+      </div>
+      <div class="depo-card">
+        <div class="estrelas">★★★★★</div>
+        <p class="depo-texto">"O hambúrguer chega quentinho e o atendimento é rápido. Recomendo o Bacon Rajado."</p>
+        <div class="depo-nome">— Carlos Lima</div>
+      </div>
+      <div class="depo-card">
+        <div class="estrelas">★★★★★</div>
+        <p class="depo-texto">"Ambiente gostoso, preço justo. O Combo do Gato rende muito bem pra duas pessoas."</p>
+        <div class="depo-nome">— Beatriz Rocha</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== LOCALIZACAO ===== -->
+<section class="local" id="local">
+  <div class="container">
+    <span class="eyebrow reveal">Como chegar</span>
+    <h2 class="titulo-secao reveal">Onde a gente <span>tá</span></h2>
+    <div class="local-grid reveal">
+      <div class="info-local">
+        <div class="info-item">
+          <div class="icone">📍</div>
+          <div>
+            <h4>Endereço</h4>
+            <p id="texto-endereco">Rua das Flores, 123 - Centro, Uberlândia - MG</p>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="icone">🕒</div>
+          <div>
+            <h4>Horário</h4>
+            <p>
+              <span class="horario-linha"><span>Seg a Sex</span><span id="valor-horario-semana">18h às 23h</span></span>
+              <span class="horario-linha"><span>Sáb e Dom</span><span id="valor-horario-fds">18h às 23h</span></span>
+              <span class="horario-linha"><span id="valor-dia-folga">Segunda</span><span>Fechado</span></span>
+            </p>
+          </div>
+        </div>
+        <div class="info-item">
+          <div class="icone">📱</div>
+          <div>
+            <h4>Contato</h4>
+            <p>Whatsapp: (34) 9XXXX-XXXX<br>Instagram: @miaumiau.burgers</p>
+          </div>
+        </div>
+      </div>
+      <div class="mapa-fake">
+        <div class="pin">📍</div>
+        <span>Mapa interativo aqui</span>
+        <a href="#" class="btn btn-fora" style="font-size:13px;padding:10px 20px;">Abrir no Google Maps</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="marca">
+        <img src="img/logo.jpg" alt="Logo Miau Miau">
+        Miau Miau Burgers & Espetinhos
+      </div>
+      <div class="footer-social">
+        <a href="#" id="link-instagram-footer">📷</a>
+        <a href="#" id="link-facebook-footer">📘</a>
+        <a href="#">💬</a>
+      </div>
+    </div>
+    <div class="footer-copy">© 2026 Miau Miau Burgers & Espetinhos</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>

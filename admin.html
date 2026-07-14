@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel do Cardápio - Miau Miau</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- ===== TELA DE LOGIN ===== -->
+<div class="tela-login" id="tela-login">
+  <form id="form-login" class="caixa-login">
+    <img src="img/logo.jpg" alt="Miau Miau" class="logo-login">
+    <h1>Painel do Cardápio</h1>
+    <p class="texto-ajuda">Entra com o email e senha que o JP cadastrou pra você.</p>
+    <label>Email</label>
+    <input type="email" id="login-email" required placeholder="seuemail@exemplo.com">
+    <label>Senha</label>
+    <input type="password" id="login-senha" required placeholder="••••••••">
+    <p class="erro" id="erro-login"></p>
+    <button type="submit" class="btn-principal">Entrar</button>
+  </form>
+</div>
+
+<!-- ===== PAINEL (so aparece depois do login) ===== -->
+<div class="tela-painel" id="tela-painel" style="display:none;">
+
+  <header class="topo-painel">
+    <div class="marca-painel">
+      <img src="img/logo.jpg" alt="Miau Miau">
+      Painel do Cardápio
+    </div>
+    <button id="btn-sair" class="btn-fora-mini">Sair</button>
+  </header>
+
+  <main class="conteudo-painel">
+
+    <!-- formulario com as informacoes gerais do site -->
+    <section class="caixa">
+      <h2>Informações do Site</h2>
+      <form id="form-config" class="form-prato">
+
+        <div class="campo">
+          <label>Cidade</label>
+          <input type="text" id="config-cidade" placeholder="Ex: Uberlândia">
+        </div>
+
+        <div class="campo">
+          <label>Whatsapp (só números, com DDD e 55 na frente)</label>
+          <input type="text" id="config-whatsapp" placeholder="Ex: 5534999999999">
+        </div>
+
+        <div class="campo">
+          <label>Endereço</label>
+          <input type="text" id="config-endereco" placeholder="Ex: Rua das Flores, 123 - Centro">
+        </div>
+
+        <div class="linha-dois-campos">
+          <div class="campo">
+            <label>Horário dias de semana</label>
+            <input type="text" id="config-horario-semana" placeholder="Ex: 18h às 23h">
+          </div>
+          <div class="campo">
+            <label>Horário fim de semana</label>
+            <input type="text" id="config-horario-fds" placeholder="Ex: 18h às 23h">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Dia de folga</label>
+          <input type="text" id="config-dia-folga" placeholder="Ex: Segunda">
+        </div>
+
+        <div class="campo">
+          <label>Instagram (link completo)</label>
+          <input type="text" id="config-instagram" placeholder="Ex: https://instagram.com/miaumiau.burgers">
+        </div>
+
+        <div class="campo">
+          <label>Facebook (link completo)</label>
+          <input type="text" id="config-facebook" placeholder="Ex: https://facebook.com/miaumiau.burgers">
+        </div>
+
+        <div class="campo">
+          <label>Mapa (cola o código do iframe do Google Maps)</label>
+          <textarea id="config-mapa-embed" rows="3" placeholder='<iframe src="..."></iframe>'></textarea>
+        </div>
+
+        <p class="msg-form" id="msg-config"></p>
+
+        <div class="botoes-form">
+          <button type="submit" class="btn-principal">Salvar informações</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- formulario de adicionar/editar -->
+    <section class="caixa">
+      <h2 id="titulo-form">Adicionar item novo</h2>
+      <form id="form-prato" class="form-prato">
+
+        <div class="campo">
+          <label>Nome do item</label>
+          <input type="text" id="campo-nome" required placeholder="Ex: Bacon Rajado">
+        </div>
+
+        <div class="campo">
+          <label>Descrição</label>
+          <textarea id="campo-descricao" rows="2" placeholder="Ex: blend 180g, bacon, cheddar duplo..."></textarea>
+        </div>
+
+        <div class="linha-dois-campos">
+          <div class="campo">
+            <label>Preço (R$)</label>
+            <input type="number" id="campo-preco" step="0.01" min="0" required placeholder="29.90">
+          </div>
+          <div class="campo">
+            <label>Categoria</label>
+            <select id="campo-categoria">
+              <option value="burger">Burger</option>
+              <option value="espetinho">Espetinho</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Foto (opcional)</label>
+          <input type="file" id="campo-foto" accept="image/*">
+        </div>
+
+        <div class="campo campo-checkbox">
+          <label><input type="checkbox" id="campo-disponivel" checked> Disponível no cardápio</label>
+        </div>
+
+        <p class="msg-form" id="msg-form"></p>
+
+        <div class="botoes-form">
+          <button type="submit" class="btn-principal">Salvar</button>
+          <button type="button" id="btn-cancelar-edicao" class="btn-fora-mini" style="display:none;">Cancelar edição</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- lista do que ja existe -->
+    <section class="caixa">
+      <h2>Itens cadastrados</h2>
+      <div id="lista-pratos" class="lista-pratos">
+        <p>Carregando...</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
+<script src="admin.js"></script>
+
+</body>
+</html>
