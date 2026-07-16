@@ -107,6 +107,33 @@ abas.forEach(function(btn){
   });
 });
 
+// ===== MENU MOBILE (hamburguer) =====
+
+const btnMenuMobile = document.querySelector('.menu-hamburguer');
+const navMobile = document.querySelector('header nav');
+
+btnMenuMobile.addEventListener('click', function(e){
+  e.stopPropagation();
+  navMobile.classList.toggle('aberto');
+  btnMenuMobile.classList.toggle('ativo');
+});
+
+// fecha o menu ao clicar num link
+navMobile.querySelectorAll('a').forEach(function(link){
+  link.addEventListener('click', function(){
+    navMobile.classList.remove('aberto');
+    btnMenuMobile.classList.remove('ativo');
+  });
+});
+
+// fecha o menu se clicar fora dele
+document.addEventListener('click', function(e){
+  if(navMobile.classList.contains('aberto') && !navMobile.contains(e.target) && !btnMenuMobile.contains(e.target)){
+    navMobile.classList.remove('aberto');
+    btnMenuMobile.classList.remove('ativo');
+  }
+});
+
 // efeito de revelar a secao conforme rola a pagina
 var observador = new IntersectionObserver(function(entradas){
   entradas.forEach(function(item){
@@ -229,6 +256,133 @@ function formatarInstagram(link){
   return usuario.startsWith('@') ? usuario : '@' + usuario;
 }
 
+// ===== AVALIACOES DE CLIENTES =====
+
+// monta o texto das estrelas com a quantidade real de estrelas cheias
+function renderEstrelas(qtd){
+  let texto = '';
+  for(let i = 1; i <= 5; i++){
+    texto += i <= qtd ? '★' : '☆';
+  }
+  return texto;
+}
+
+// busca as avaliacoes aprovadas (mais recentes primeiro, no maximo 6) e desenha na tela
+async function carregarAvaliacoes(){
+  const secaoAvaliacoes = document.getElementById('avaliacoes');
+  const listaAvaliacoes = document.getElementById('lista-avaliacoes');
+
+  const { data, error } = await sb
+    .from('avaliacoes')
+    .select('*')
+    .eq('aprovado', true)
+    .order('criado_em', { ascending: false })
+    .limit(6);
+
+  if(error || !data || data.length === 0){
+    if(error) console.error('erro ao buscar avaliacoes', error);
+    secaoAvaliacoes.style.display = 'none'; // sem avaliacao aprovada, esconde a secao toda
+    return;
+  }
+
+  secaoAvaliacoes.style.display = '';
+  listaAvaliacoes.innerHTML = data.map(function(a){
+    return '<div class="depo-card">' +
+      '<div class="estrelas">' + renderEstrelas(a.estrelas) + '</div>' +
+      '<p class="depo-texto">"' + escapeHtml(a.comentario) + '"</p>' +
+      '<div class="depo-nome">— ' + escapeHtml(a.nome) + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ===== FORMULARIO/MODAL DE NOVA AVALIACAO =====
+
+const modalAvaliacao = document.getElementById('modal-avaliacao');
+const btnAbrirAvaliacao = document.getElementById('btn-abrir-avaliacao');
+const btnFecharAvaliacao = document.getElementById('btn-fechar-avaliacao');
+const formAvaliacao = document.getElementById('form-avaliacao');
+const msgAvaliacao = document.getElementById('msg-avaliacao');
+const inputComentario = document.getElementById('avaliacao-comentario');
+const contadorComentario = document.getElementById('contador-comentario');
+const botoesEstrela = document.querySelectorAll('.estrela-btn');
+
+let notaEscolhida = 0;
+
+// se ja mandou avaliacao nessa sessao, deixa o botao desabilitado
+if(sessionStorage.getItem('avaliacaoEnviada')){
+  btnAbrirAvaliacao.textContent = 'Avaliação enviada, obrigado!';
+  btnAbrirAvaliacao.disabled = true;
+}
+
+btnAbrirAvaliacao.addEventListener('click', function(){
+  modalAvaliacao.classList.add('aberto');
+});
+
+btnFecharAvaliacao.addEventListener('click', function(){
+  modalAvaliacao.classList.remove('aberto');
+});
+
+// fecha o modal se clicar fora da caixa
+modalAvaliacao.addEventListener('click', function(e){
+  if(e.target === modalAvaliacao) modalAvaliacao.classList.remove('aberto');
+});
+
+// clique numa estrela escolhe a nota (preenche ela e todas as anteriores)
+botoesEstrela.forEach(function(btn){
+  btn.addEventListener('click', function(){
+    notaEscolhida = Number(btn.dataset.valor);
+    botoesEstrela.forEach(function(b){
+      b.classList.toggle('selecionada', Number(b.dataset.valor) <= notaEscolhida);
+    });
+  });
+});
+
+// contador de caracteres do comentario
+inputComentario.addEventListener('input', function(){
+  contadorComentario.textContent = inputComentario.value.length + '/300';
+});
+
+// envio da avaliacao - sempre entra como nao aprovada, esperando o dono liberar
+formAvaliacao.addEventListener('submit', async function(e){
+  e.preventDefault();
+
+  const nome = document.getElementById('avaliacao-nome').value.trim();
+  const comentario = inputComentario.value.trim();
+
+  if(!nome || !comentario || notaEscolhida === 0){
+    msgAvaliacao.textContent = 'Preenche o nome, a nota e o comentário.';
+    return;
+  }
+
+  msgAvaliacao.textContent = 'Enviando...';
+
+  const { error } = await sb.from('avaliacoes').insert({
+    nome: nome,
+    estrelas: notaEscolhida,
+    comentario: comentario,
+    aprovado: false
+  });
+
+  if(error){
+    msgAvaliacao.textContent = 'Erro ao enviar: ' + error.message;
+    return;
+  }
+
+  sessionStorage.setItem('avaliacaoEnviada', 'true');
+  msgAvaliacao.textContent = 'Recebemos sua avaliação! Ela aparece aqui depois de aprovada.';
+  formAvaliacao.reset();
+  notaEscolhida = 0;
+  botoesEstrela.forEach(function(b){ b.classList.remove('selecionada'); });
+  contadorComentario.textContent = '0/300';
+
+  setTimeout(function(){
+    modalAvaliacao.classList.remove('aberto');
+    msgAvaliacao.textContent = '';
+    btnAbrirAvaliacao.textContent = 'Avaliação enviada, obrigado!';
+    btnAbrirAvaliacao.disabled = true;
+  }, 2500);
+});
+
 // busca a linha de configuracoes do site (cidade, whatsapp, endereco...) e aplica no html
 async function carregarConfiguracoes(){
   const { data, error } = await sb
@@ -323,8 +477,9 @@ async function carregarConfiguracoes(){
   }
 }
 
-// busca o cardapio, fotos, combos e configuracoes assim que a pagina carrega
+// busca o cardapio, fotos, combos, avaliacoes e configuracoes assim que a pagina carrega
 carregarCardapio();
 carregarFotosFachada();
 carregarCombos();
+carregarAvaliacoes();
 carregarConfiguracoes();

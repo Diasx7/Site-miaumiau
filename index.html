@@ -26,7 +26,7 @@
       </ul>
     </nav>
     <div class="header-cta">
-      <a class="btn btn-principal" id="btn-whatsapp-header" href="#" style="padding:10px 22px;font-size:13px;">Pedir no Whatsapp</a>
+      <a class="btn btn-principal" id="btn-whatsapp-header" href="#">Pedir no Whatsapp</a>
       <button class="menu-hamburguer" aria-label="abrir menu"><span></span><span></span><span></span></button>
     </div>
   </div>
@@ -135,27 +135,16 @@
   </div>
 </section>
 
-<!-- ===== DEPOIMENTOS ===== -->
-<section class="depoimentos">
+<!-- ===== AVALIACOES ===== -->
+<section class="depoimentos" id="avaliacoes">
   <div class="container">
     <span class="eyebrow reveal">Quem já provou</span>
     <h2 class="titulo-secao reveal">O que <span>falam</span> da gente</h2>
-    <div class="grade-depo reveal">
-      <div class="depo-card">
-        <div class="estrelas">★★★★★</div>
-        <p class="depo-texto">"Melhor espetinho da região, sempre na brasa certinha. Virou programa de toda sexta."</p>
-        <div class="depo-nome">— Ana Souza</div>
-      </div>
-      <div class="depo-card">
-        <div class="estrelas">★★★★★</div>
-        <p class="depo-texto">"O hambúrguer chega quentinho e o atendimento é rápido. Recomendo o Bacon Rajado."</p>
-        <div class="depo-nome">— Carlos Lima</div>
-      </div>
-      <div class="depo-card">
-        <div class="estrelas">★★★★★</div>
-        <p class="depo-texto">"Ambiente gostoso, preço justo. O Combo do Gato rende muito bem pra duas pessoas."</p>
-        <div class="depo-nome">— Beatriz Rocha</div>
-      </div>
+    <div class="grade-depo reveal" id="lista-avaliacoes">
+      <p style="color:var(--creme-fraco);font-size:14px;">Carregando avaliações...</p>
+    </div>
+    <div class="avaliacao-cta reveal">
+      <button class="btn btn-fora" id="btn-abrir-avaliacao">Deixar minha avaliação</button>
     </div>
   </div>
 </section>
@@ -198,7 +187,7 @@
       <div class="mapa-fake">
         <div class="pin">📍</div>
         <span>Mapa interativo aqui</span>
-        <a href="#" class="btn btn-fora" style="font-size:13px;padding:10px 20px;">Abrir no Google Maps</a>
+        <a href="#" class="btn btn-fora btn-mapa">Abrir no Google Maps</a>
       </div>
     </div>
   </div>
@@ -230,6 +219,37 @@
     <h3 id="modal-nome"></h3>
     <p id="modal-descricao"></p>
     <div class="modal-preco" id="modal-preco"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL DE AVALIACAO (formulario do cliente) ===== -->
+<div class="modal-overlay" id="modal-avaliacao">
+  <div class="modal-caixa">
+    <button class="modal-fechar" id="btn-fechar-avaliacao">&times;</button>
+    <h3>Deixe sua avaliação</h3>
+    <form id="form-avaliacao">
+      <div class="campo-avaliacao">
+        <label>Seu nome</label>
+        <input type="text" id="avaliacao-nome" maxlength="40" required placeholder="Ex: Maria Silva">
+      </div>
+      <div class="campo-avaliacao">
+        <label>Nota</label>
+        <div class="estrelas-input" id="estrelas-input">
+          <button type="button" class="estrela-btn" data-valor="1">★</button>
+          <button type="button" class="estrela-btn" data-valor="2">★</button>
+          <button type="button" class="estrela-btn" data-valor="3">★</button>
+          <button type="button" class="estrela-btn" data-valor="4">★</button>
+          <button type="button" class="estrela-btn" data-valor="5">★</button>
+        </div>
+      </div>
+      <div class="campo-avaliacao">
+        <label>Comentário</label>
+        <textarea id="avaliacao-comentario" maxlength="300" rows="3" required placeholder="Conta pra gente como foi sua experiência..."></textarea>
+        <span class="contador-caracteres" id="contador-comentario">0/300</span>
+      </div>
+      <p class="msg-avaliacao" id="msg-avaliacao"></p>
+      <button type="submit" class="btn btn-principal btn-largo">Enviar avaliação</button>
+    </form>
   </div>
 </div>
 

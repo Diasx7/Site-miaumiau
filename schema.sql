@@ -162,3 +162,44 @@ using (auth.role() = 'authenticated');
 -- ========================================================
 
 alter table configuracoes add column telefone text;
+
+
+-- ========================================================
+-- TABELA DE AVALIACOES DE CLIENTES (com moderacao do dono)
+-- ========================================================
+
+create table avaliacoes (
+  id bigint generated always as identity primary key,
+  nome text not null,
+  estrelas int not null check (estrelas between 1 and 5),
+  comentario text not null,
+  aprovado boolean default false,
+  criado_em timestamp default now()
+);
+
+alter table avaliacoes enable row level security;
+
+-- visitante do site so ve as avaliacoes ja aprovadas (pendente nao pode vazar pela API)
+create policy "leitura publica das avaliacoes aprovadas"
+on avaliacoes for select
+using (aprovado = true);
+
+-- admin logado ve todas, inclusive as pendentes, pra poder moderar no painel
+create policy "admin ve todas as avaliacoes"
+on avaliacoes for select
+using (auth.role() = 'authenticated');
+
+-- qualquer visitante pode enviar uma avaliacao, mas sempre entra como nao aprovada
+create policy "visitante pode enviar avaliacao"
+on avaliacoes for insert
+with check (aprovado = false);
+
+-- só usuario logado pode aprovar (é um update mudando aprovado pra true)
+create policy "admin pode aprovar avaliacao"
+on avaliacoes for update
+using (auth.role() = 'authenticated');
+
+-- só usuario logado pode excluir
+create policy "admin pode excluir avaliacao"
+on avaliacoes for delete
+using (auth.role() = 'authenticated');

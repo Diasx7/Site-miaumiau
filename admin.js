@@ -51,6 +51,7 @@ function mostrarPainel(){
   carregarConfiguracoes();
   carregarFotosFachada();
   carregarListaCombos();
+  carregarAvaliacoes();
 }
 
 // busca todos os pratos (disponiveis ou nao) pra mostrar na lista do painel
@@ -454,3 +455,95 @@ formCombo.addEventListener('submit', async function(e){
   carregarListaCombos();
   setTimeout(function(){ msgCombo.textContent = ''; }, 2500);
 });
+
+// ===== AVALIACOES (moderacao) =====
+
+const tituloAvaliacoes = document.getElementById('titulo-avaliacoes');
+const listaAvaliacoesPendentes = document.getElementById('lista-avaliacoes-pendentes');
+const listaAvaliacoesPublicadas = document.getElementById('lista-avaliacoes-publicadas');
+
+// deixa a data bonitinha, tipo 16/07/2026
+function formatarData(dataIso){
+  const data = new Date(dataIso);
+  return data.toLocaleDateString('pt-BR');
+}
+
+// monta o texto das estrelas com a quantidade real de estrelas cheias
+function renderEstrelasAdmin(qtd){
+  let texto = '';
+  for(let i = 1; i <= 5; i++){
+    texto += i <= qtd ? '★' : '☆';
+  }
+  return texto;
+}
+
+// desenha um card de avaliacao na lista (o botao de aprovar so aparece se pedirem)
+function cardAvaliacao(a, mostrarAprovar){
+  const botaoAprovar = mostrarAprovar
+    ? '<button class="btn-mini ok" data-acao="aprovar-avaliacao" data-id="' + a.id + '">Aprovar</button>'
+    : '';
+
+  return '<div class="item-lista">' +
+    '<div class="item-info">' +
+      '<strong>' + escapeHtml(a.nome) + '</strong>' +
+      '<span>' + renderEstrelasAdmin(a.estrelas) + ' · ' + formatarData(a.criado_em) + '</span>' +
+      '<p class="item-comentario">' + escapeHtml(a.comentario) + '</p>' +
+    '</div>' +
+    '<div class="item-acoes">' +
+      botaoAprovar +
+      '<button class="btn-mini perigo" data-acao="excluir-avaliacao" data-id="' + a.id + '">Excluir</button>' +
+    '</div>' +
+  '</div>';
+}
+
+// busca todas as avaliacoes e separa entre pendentes e publicadas
+async function carregarAvaliacoes(){
+  listaAvaliacoesPendentes.innerHTML = '<p>Carregando...</p>';
+  listaAvaliacoesPublicadas.innerHTML = '<p>Carregando...</p>';
+
+  const { data, error } = await sb.from('avaliacoes').select('*').order('criado_em', { ascending: false });
+
+  if(error){
+    listaAvaliacoesPendentes.innerHTML = '<p>Erro ao carregar: ' + error.message + '</p>';
+    listaAvaliacoesPublicadas.innerHTML = '';
+    return;
+  }
+
+  const pendentes = data.filter(function(a){ return !a.aprovado; });
+  const publicadas = data.filter(function(a){ return a.aprovado; });
+
+  tituloAvaliacoes.textContent = pendentes.length > 0
+    ? 'Avaliações (' + pendentes.length + ' pendentes)'
+    : 'Avaliações';
+
+  listaAvaliacoesPendentes.innerHTML = pendentes.length === 0
+    ? '<p>Nenhuma avaliação pendente.</p>'
+    : pendentes.map(function(a){ return cardAvaliacao(a, true); }).join('');
+
+  listaAvaliacoesPublicadas.innerHTML = publicadas.length === 0
+    ? '<p>Nenhuma avaliação publicada ainda.</p>'
+    : publicadas.map(function(a){ return cardAvaliacao(a, false); }).join('');
+}
+
+// cliques nos botoes de aprovar/excluir (funciona pras duas listas)
+async function cliqueAvaliacao(e){
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const acao = btn.dataset.acao;
+
+  if(acao === 'aprovar-avaliacao'){
+    await sb.from('avaliacoes').update({ aprovado: true }).eq('id', id);
+    carregarAvaliacoes();
+  }
+
+  if(acao === 'excluir-avaliacao'){
+    const confirmou = confirm('Tem certeza que quer excluir essa avaliação?');
+    if(!confirmou) return;
+    await sb.from('avaliacoes').delete().eq('id', id);
+    carregarAvaliacoes();
+  }
+}
+
+listaAvaliacoesPendentes.addEventListener('click', cliqueAvaliacao);
+listaAvaliacoesPublicadas.addEventListener('click', cliqueAvaliacao);
