@@ -53,6 +53,11 @@
         </div>
 
         <div class="campo">
+          <label>Telefone fixo (opcional)</label>
+          <input type="text" id="config-telefone" placeholder="Ex: (34) 3333-4444">
+        </div>
+
+        <div class="campo">
           <label>Endereço</label>
           <input type="text" id="config-endereco" placeholder="Ex: Rua das Flores, 123 - Centro">
         </div>
@@ -94,6 +99,65 @@
           <button type="submit" class="btn-principal">Salvar informações</button>
         </div>
       </form>
+    </section>
+
+    <!-- fotos da fachada que aparecem no carrossel da secao Sobre -->
+    <section class="caixa">
+      <h2>Fotos do Local</h2>
+      <form id="form-foto-fachada" class="form-prato">
+        <div class="campo">
+          <label>Escolher foto</label>
+          <input type="file" id="campo-foto-fachada" accept="image/*" required>
+        </div>
+        <p class="msg-form" id="msg-foto-fachada"></p>
+        <div class="botoes-form">
+          <button type="submit" class="btn-principal">Enviar foto</button>
+        </div>
+      </form>
+      <div id="lista-fotos-fachada" class="lista-pratos" style="margin-top:18px;">
+        <p>Carregando...</p>
+      </div>
+    </section>
+
+    <!-- formulario de combos (o banner que fica em rotacao no site) -->
+    <section class="caixa">
+      <h2 id="titulo-form-combo">Adicionar combo novo</h2>
+      <form id="form-combo" class="form-prato">
+
+        <div class="campo">
+          <label>Nome do combo</label>
+          <input type="text" id="combo-nome" required placeholder="Ex: Combo do Gato">
+        </div>
+
+        <div class="campo">
+          <label>Descrição</label>
+          <textarea id="combo-descricao" rows="2" placeholder="Ex: 1 Clássico Miau + batata + 2 espetinhos..."></textarea>
+        </div>
+
+        <div class="campo">
+          <label>Preço (R$)</label>
+          <input type="number" id="combo-preco" step="0.01" min="0" required placeholder="49.90">
+        </div>
+
+        <div class="campo campo-checkbox">
+          <label><input type="checkbox" id="combo-disponivel" checked> Disponível no site</label>
+        </div>
+
+        <p class="msg-form" id="msg-combo"></p>
+
+        <div class="botoes-form">
+          <button type="submit" class="btn-principal">Salvar</button>
+          <button type="button" id="btn-cancelar-combo" class="btn-fora-mini" style="display:none;">Cancelar edição</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- lista dos combos ja cadastrados -->
+    <section class="caixa">
+      <h2>Combos cadastrados</h2>
+      <div id="lista-combos" class="lista-pratos">
+        <p>Carregando...</p>
+      </div>
     </section>
 
     <!-- formulario de adicionar/editar -->

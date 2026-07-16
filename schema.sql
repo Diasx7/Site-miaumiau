@@ -90,3 +90,75 @@ using (auth.role() = 'authenticated');
 
 -- cria a linha unica (id = 1) ja vazia, pra so dar update nela depois
 insert into configuracoes (id) values (1);
+
+
+-- ========================================================
+-- TABELA DE FOTOS DA FACHADA (carrossel na secao Sobre)
+-- ========================================================
+
+create table fotos_fachada (
+  id bigint generated always as identity primary key,
+  foto_url text not null,
+  ordem int default 0,
+  criado_em timestamp default now()
+);
+
+alter table fotos_fachada enable row level security;
+
+-- qualquer visitante pode ver as fotos
+create policy "leitura publica das fotos da fachada"
+on fotos_fachada for select
+using (true);
+
+-- só usuario logado pode enviar foto nova
+create policy "admin pode inserir foto da fachada"
+on fotos_fachada for insert
+with check (auth.role() = 'authenticated');
+
+-- só usuario logado pode excluir foto
+create policy "admin pode excluir foto da fachada"
+on fotos_fachada for delete
+using (auth.role() = 'authenticated');
+
+
+-- ========================================================
+-- TABELA DE COMBOS (banner de combo em rotacao no site)
+-- ========================================================
+
+create table combos (
+  id bigint generated always as identity primary key,
+  nome text not null,
+  descricao text,
+  preco numeric not null,
+  disponivel boolean default true,
+  ordem int default 0
+);
+
+alter table combos enable row level security;
+
+-- qualquer visitante pode ver os combos
+create policy "leitura publica dos combos"
+on combos for select
+using (true);
+
+-- só usuario logado pode criar combo
+create policy "admin pode criar combo"
+on combos for insert
+with check (auth.role() = 'authenticated');
+
+-- só usuario logado pode editar combo
+create policy "admin pode editar combo"
+on combos for update
+using (auth.role() = 'authenticated');
+
+-- só usuario logado pode excluir combo
+create policy "admin pode excluir combo"
+on combos for delete
+using (auth.role() = 'authenticated');
+
+
+-- ========================================================
+-- CAMPO NOVO NA TABELA CONFIGURACOES: TELEFONE FIXO
+-- ========================================================
+
+alter table configuracoes add column telefone text;

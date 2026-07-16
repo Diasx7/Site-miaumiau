@@ -83,8 +83,8 @@
     <span class="eyebrow reveal">Nossa História</span>
     <h2 class="titulo-secao reveal">De onde vem o <span>Miau Miau</span></h2>
     <div class="sobre-grid reveal">
-      <div class="sobre-foto">
-        📸 Foto da fachada
+      <div class="sobre-foto" id="carrossel-fachada">
+        <span id="carrossel-placeholder">📸 Foto da fachada</span>
       </div>
       <div class="sobre-texto">
         <p>
@@ -130,13 +130,8 @@
 
 <!-- ===== COMBO DESTAQUE ===== -->
 <section class="combo" id="combo">
-  <div class="combo-banner reveal">
-    <div>
-      <span class="combo-eyebrow">Combo da Casa</span>
-      <h3>Combo do Gato 🐾</h3>
-      <p>1 Clássico Miau + batata frita + 2 espetinhos à escolha + refrigerante. Bom pra duas pessoas.</p>
-    </div>
-    <div class="combo-preco">R$ 49,90<small>por pessoa</small></div>
+  <div class="combo-banner reveal" id="combo-banner">
+    <p style="color:var(--creme-fraco);font-size:14px;">Carregando combo...</p>
   </div>
 </section>
 
@@ -194,7 +189,9 @@
           <div class="icone">📱</div>
           <div>
             <h4>Contato</h4>
-            <p>Whatsapp: (34) 9XXXX-XXXX<br>Instagram: @miaumiau.burgers</p>
+            <p id="linha-contato-whatsapp">Whatsapp: <span id="valor-contato-whatsapp"></span></p>
+            <p id="linha-contato-telefone">Telefone: <span id="valor-contato-telefone"></span></p>
+            <p id="linha-contato-instagram">Instagram: <span id="valor-contato-instagram"></span></p>
           </div>
         </div>
       </div>
@@ -224,6 +221,17 @@
     <div class="footer-copy">© 2026 Miau Miau Burgers & Espetinhos</div>
   </div>
 </footer>
+
+<!-- ===== MODAL DO PRATO (abre ao clicar num card do cardapio) ===== -->
+<div class="modal-overlay" id="modal-prato">
+  <div class="modal-caixa">
+    <button class="modal-fechar" id="btn-fechar-modal">&times;</button>
+    <img id="modal-foto" src="" alt="" style="display:none;">
+    <h3 id="modal-nome"></h3>
+    <p id="modal-descricao"></p>
+    <div class="modal-preco" id="modal-preco"></div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>

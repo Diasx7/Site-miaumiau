@@ -49,6 +49,8 @@ function mostrarPainel(){
   telaPainel.style.display = 'block';
   carregarLista();
   carregarConfiguracoes();
+  carregarFotosFachada();
+  carregarListaCombos();
 }
 
 // busca todos os pratos (disponiveis ou nao) pra mostrar na lista do painel
@@ -212,6 +214,7 @@ async function carregarConfiguracoes(){
 
   document.getElementById('config-cidade').value = data.cidade || '';
   document.getElementById('config-whatsapp').value = data.whatsapp || '';
+  document.getElementById('config-telefone').value = data.telefone || '';
   document.getElementById('config-endereco').value = data.endereco || '';
   document.getElementById('config-horario-semana').value = data.horario_semana || '';
   document.getElementById('config-horario-fds').value = data.horario_fds || '';
@@ -229,6 +232,7 @@ formConfig.addEventListener('submit', async function(e){
   const dadosConfig = {
     cidade: document.getElementById('config-cidade').value.trim(),
     whatsapp: document.getElementById('config-whatsapp').value.trim(),
+    telefone: document.getElementById('config-telefone').value.trim(),
     endereco: document.getElementById('config-endereco').value.trim(),
     horario_semana: document.getElementById('config-horario-semana').value.trim(),
     horario_fds: document.getElementById('config-horario-fds').value.trim(),
@@ -247,4 +251,206 @@ formConfig.addEventListener('submit', async function(e){
 
   msgConfig.textContent = 'Salvo!';
   setTimeout(function(){ msgConfig.textContent = ''; }, 2500);
+});
+
+// ===== FOTOS DO LOCAL (carrossel da secao Sobre) =====
+
+const formFotoFachada = document.getElementById('form-foto-fachada');
+const listaFotosFachada = document.getElementById('lista-fotos-fachada');
+const msgFotoFachada = document.getElementById('msg-foto-fachada');
+
+// busca as fotos ja cadastradas e mostra a lista com botao de excluir
+async function carregarFotosFachada(){
+  listaFotosFachada.innerHTML = '<p>Carregando...</p>';
+  const { data, error } = await sb.from('fotos_fachada').select('*').order('ordem');
+
+  if(error){
+    listaFotosFachada.innerHTML = '<p>Erro ao carregar: ' + error.message + '</p>';
+    return;
+  }
+  if(data.length === 0){
+    listaFotosFachada.innerHTML = '<p>Nenhuma foto cadastrada ainda.</p>';
+    return;
+  }
+
+  listaFotosFachada.innerHTML = data.map(function(f){
+    return '<div class="item-lista">' +
+      '<img src="' + f.foto_url + '" alt="">' +
+      '<div class="item-info"><span>Foto da fachada</span></div>' +
+      '<div class="item-acoes">' +
+        '<button class="btn-mini perigo" data-acao="excluir-foto" data-id="' + f.id + '">Excluir</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// envia a foto escolhida pro storage e salva o link na tabela
+formFotoFachada.addEventListener('submit', async function(e){
+  e.preventDefault();
+  msgFotoFachada.textContent = 'Enviando...';
+
+  const arquivo = document.getElementById('campo-foto-fachada').files[0];
+  if(!arquivo){
+    msgFotoFachada.textContent = 'Escolhe uma foto primeiro.';
+    return;
+  }
+
+  const nomeArquivo = Date.now() + '-' + arquivo.name.replace(/\s+/g, '-');
+  const { error: erroUpload } = await sb.storage.from('fotos-cardapio').upload(nomeArquivo, arquivo);
+
+  if(erroUpload){
+    msgFotoFachada.textContent = 'Erro ao enviar: ' + erroUpload.message;
+    return;
+  }
+
+  const urlData = sb.storage.from('fotos-cardapio').getPublicUrl(nomeArquivo).data;
+  const { error: erroInsert } = await sb.from('fotos_fachada').insert({ foto_url: urlData.publicUrl });
+
+  if(erroInsert){
+    msgFotoFachada.textContent = 'Erro ao salvar: ' + erroInsert.message;
+    return;
+  }
+
+  msgFotoFachada.textContent = 'Foto enviada!';
+  formFotoFachada.reset();
+  carregarFotosFachada();
+  setTimeout(function(){ msgFotoFachada.textContent = ''; }, 2500);
+});
+
+// clique no botao de excluir foto
+listaFotosFachada.addEventListener('click', async function(e){
+  const btn = e.target.closest('button');
+  if(!btn || btn.dataset.acao !== 'excluir-foto') return;
+
+  const confirmou = confirm('Tem certeza que quer excluir essa foto?');
+  if(!confirmou) return;
+
+  await sb.from('fotos_fachada').delete().eq('id', btn.dataset.id);
+  carregarFotosFachada();
+});
+
+// ===== COMBOS (banner em rotacao no site) =====
+
+const formCombo = document.getElementById('form-combo');
+const listaCombos = document.getElementById('lista-combos');
+const tituloFormCombo = document.getElementById('titulo-form-combo');
+const btnCancelarCombo = document.getElementById('btn-cancelar-combo');
+const msgCombo = document.getElementById('msg-combo');
+
+let editandoComboId = null; // quando nao for null, o formulario esta editando esse combo
+
+// busca todos os combos (disponiveis ou nao) pra mostrar na lista do painel
+async function carregarListaCombos(){
+  listaCombos.innerHTML = '<p>Carregando...</p>';
+  const { data, error } = await sb.from('combos').select('*').order('ordem');
+
+  if(error){
+    listaCombos.innerHTML = '<p>Erro ao carregar: ' + error.message + '</p>';
+    return;
+  }
+  if(data.length === 0){
+    listaCombos.innerHTML = '<p>Nenhum combo cadastrado ainda. Usa o formulário acima pra adicionar o primeiro.</p>';
+    return;
+  }
+
+  listaCombos.innerHTML = data.map(function(c){
+    return '<div class="item-lista">' +
+      '<div class="item-info">' +
+        '<strong>' + escapeHtml(c.nome) + '</strong>' +
+        '<span>R$ ' + Number(c.preco).toFixed(2).replace('.', ',') + '</span>' +
+      '</div>' +
+      '<div class="item-acoes">' +
+        '<button class="btn-mini ' + (c.disponivel ? 'ok' : 'esgotado') + '" data-acao="toggle-combo" data-id="' + c.id + '" data-disp="' + c.disponivel + '">' +
+          (c.disponivel ? 'Disponível' : 'Esgotado') +
+        '</button>' +
+        '<button class="btn-mini" data-acao="editar-combo" data-id="' + c.id + '">Editar</button>' +
+        '<button class="btn-mini perigo" data-acao="excluir-combo" data-id="' + c.id + '">Excluir</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// cliques nos botoes da lista de combos (disponivel/esgotado, editar, excluir)
+listaCombos.addEventListener('click', async function(e){
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const acao = btn.dataset.acao;
+
+  if(acao === 'toggle-combo'){
+    const dispAtual = btn.dataset.disp === 'true';
+    await sb.from('combos').update({ disponivel: !dispAtual }).eq('id', id);
+    carregarListaCombos();
+  }
+
+  if(acao === 'excluir-combo'){
+    const confirmou = confirm('Tem certeza que quer excluir esse combo? Não tem como desfazer depois.');
+    if(!confirmou) return;
+    await sb.from('combos').delete().eq('id', id);
+    carregarListaCombos();
+  }
+
+  if(acao === 'editar-combo'){
+    const { data } = await sb.from('combos').select('*').eq('id', id).single();
+    if(data){ carregarComboNoFormulario(data); }
+  }
+});
+
+// preenche o formulario com os dados de um combo pra editar
+function carregarComboNoFormulario(combo){
+  editandoComboId = combo.id;
+  tituloFormCombo.textContent = 'Editar combo';
+  document.getElementById('combo-nome').value = combo.nome;
+  document.getElementById('combo-descricao').value = combo.descricao || '';
+  document.getElementById('combo-preco').value = combo.preco;
+  document.getElementById('combo-disponivel').checked = combo.disponivel;
+  btnCancelarCombo.style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+btnCancelarCombo.addEventListener('click', function(){
+  limparFormularioCombo();
+});
+
+function limparFormularioCombo(){
+  editandoComboId = null;
+  tituloFormCombo.textContent = 'Adicionar combo novo';
+  formCombo.reset();
+  document.getElementById('combo-disponivel').checked = true;
+  btnCancelarCombo.style.display = 'none';
+}
+
+// envio do formulario - cria um combo novo ou atualiza o que ta sendo editado
+formCombo.addEventListener('submit', async function(e){
+  e.preventDefault();
+  msgCombo.textContent = 'Salvando...';
+
+  const nome = document.getElementById('combo-nome').value.trim();
+  const descricao = document.getElementById('combo-descricao').value.trim();
+  const preco = parseFloat(document.getElementById('combo-preco').value);
+  const disponivel = document.getElementById('combo-disponivel').checked;
+
+  if(!nome || isNaN(preco)){
+    msgCombo.textContent = 'Preenche pelo menos o nome e o preço.';
+    return;
+  }
+
+  const dadosCombo = { nome: nome, descricao: descricao, preco: preco, disponivel: disponivel };
+
+  let resultado;
+  if(editandoComboId){
+    resultado = await sb.from('combos').update(dadosCombo).eq('id', editandoComboId);
+  } else {
+    resultado = await sb.from('combos').insert(dadosCombo);
+  }
+
+  if(resultado.error){
+    msgCombo.textContent = 'Erro ao salvar: ' + resultado.error.message;
+    return;
+  }
+
+  msgCombo.textContent = 'Salvo!';
+  limparFormularioCombo();
+  carregarListaCombos();
+  setTimeout(function(){ msgCombo.textContent = ''; }, 2500);
 });
