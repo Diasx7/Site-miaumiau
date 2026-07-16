@@ -268,8 +268,8 @@ function renderEstrelas(qtd){
 }
 
 // busca as avaliacoes aprovadas (mais recentes primeiro, no maximo 6) e desenha na tela
+// a secao continua visivel mesmo sem nenhuma aprovada, pra sempre dar pra deixar a primeira avaliacao
 async function carregarAvaliacoes(){
-  const secaoAvaliacoes = document.getElementById('avaliacoes');
   const listaAvaliacoes = document.getElementById('lista-avaliacoes');
 
   const { data, error } = await sb
@@ -279,13 +279,17 @@ async function carregarAvaliacoes(){
     .order('criado_em', { ascending: false })
     .limit(6);
 
-  if(error || !data || data.length === 0){
-    if(error) console.error('erro ao buscar avaliacoes', error);
-    secaoAvaliacoes.style.display = 'none'; // sem avaliacao aprovada, esconde a secao toda
+  if(error){
+    console.error('erro ao buscar avaliacoes', error);
+    listaAvaliacoes.innerHTML = '';
     return;
   }
 
-  secaoAvaliacoes.style.display = '';
+  if(data.length === 0){
+    listaAvaliacoes.innerHTML = '<p style="color:var(--creme-fraco);font-size:14px;">Seja o primeiro a avaliar!</p>';
+    return;
+  }
+
   listaAvaliacoes.innerHTML = data.map(function(a){
     return '<div class="depo-card">' +
       '<div class="estrelas">' + renderEstrelas(a.estrelas) + '</div>' +
