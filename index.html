@@ -211,7 +211,7 @@
   </div>
 </footer>
 
-<!-- ===== MODAL DO PRATO (abre ao clicar num card do cardapio) ===== -->
+<!-- ===== MODAL DE PEDIDO (abre ao clicar num prato ou no banner de combo) ===== -->
 <div class="modal-overlay" id="modal-prato">
   <div class="modal-caixa">
     <button class="modal-fechar" id="btn-fechar-modal">&times;</button>
@@ -219,6 +219,25 @@
     <h3 id="modal-nome"></h3>
     <p id="modal-descricao"></p>
     <div class="modal-preco" id="modal-preco"></div>
+
+    <div class="modal-adicional" id="bloco-bebida" style="display:none;">
+      <span class="modal-adicional-titulo">Escolha sua bebida</span>
+      <div class="chips-adicionais" id="chips-bebida"></div>
+    </div>
+
+    <div class="modal-adicional" id="bloco-molho" style="display:none;">
+      <span class="modal-adicional-titulo">Escolha seu molho</span>
+      <div class="chips-adicionais" id="chips-molho"></div>
+    </div>
+
+    <div class="modal-rodape">
+      <div class="modal-total">
+        <span>Total</span>
+        <strong id="modal-total-valor">R$ 0,00</strong>
+      </div>
+      <p class="modal-codigo" id="modal-codigo"></p>
+      <a href="#" class="btn btn-principal btn-largo" id="btn-pedir-whatsapp" target="_blank" rel="noopener noreferrer">Pedir pelo WhatsApp</a>
+    </div>
   </div>
 </div>
 

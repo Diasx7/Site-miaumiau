@@ -51,6 +51,7 @@ function mostrarPainel(){
   carregarConfiguracoes();
   carregarFotosFachada();
   carregarListaCombos();
+  carregarListaAdicionais();
   carregarAvaliacoes();
 }
 
@@ -454,6 +455,134 @@ formCombo.addEventListener('submit', async function(e){
   limparFormularioCombo();
   carregarListaCombos();
   setTimeout(function(){ msgCombo.textContent = ''; }, 2500);
+});
+
+// ===== BEBIDAS E MOLHOS (adicionais do pedido) =====
+
+const formAdicional = document.getElementById('form-adicional');
+const listaAdicionais = document.getElementById('lista-adicionais');
+const tituloFormAdicional = document.getElementById('titulo-form-adicional');
+const btnCancelarAdicional = document.getElementById('btn-cancelar-adicional');
+const msgAdicional = document.getElementById('msg-adicional');
+
+let editandoAdicionalId = null; // quando nao for null, o formulario esta editando esse adicional
+
+// busca todas as bebidas e molhos (disponiveis ou nao) pra mostrar na lista do painel
+async function carregarListaAdicionais(){
+  listaAdicionais.innerHTML = '<p>Carregando...</p>';
+  const { data, error } = await sb.from('adicionais').select('*').order('tipo').order('ordem');
+
+  if(error){
+    listaAdicionais.innerHTML = '<p>Erro ao carregar: ' + error.message + '</p>';
+    return;
+  }
+  if(data.length === 0){
+    listaAdicionais.innerHTML = '<p>Nenhuma bebida ou molho cadastrado ainda.</p>';
+    return;
+  }
+
+  listaAdicionais.innerHTML = data.map(function(a){
+    const precoTexto = Number(a.preco) > 0 ? ('R$ ' + Number(a.preco).toFixed(2).replace('.', ',')) : 'Grátis';
+    return '<div class="item-lista">' +
+      '<div class="item-info">' +
+        '<strong>' + escapeHtml(a.nome) + '</strong>' +
+        '<span>' + (a.tipo === 'bebida' ? 'Bebida' : 'Molho') + ' · ' + precoTexto + '</span>' +
+      '</div>' +
+      '<div class="item-acoes">' +
+        '<button class="btn-mini ' + (a.disponivel ? 'ok' : 'esgotado') + '" data-acao="toggle-adicional" data-id="' + a.id + '" data-disp="' + a.disponivel + '">' +
+          (a.disponivel ? 'Disponível' : 'Esgotado') +
+        '</button>' +
+        '<button class="btn-mini" data-acao="editar-adicional" data-id="' + a.id + '">Editar</button>' +
+        '<button class="btn-mini perigo" data-acao="excluir-adicional" data-id="' + a.id + '">Excluir</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// cliques nos botoes da lista (disponivel/esgotado, editar, excluir)
+listaAdicionais.addEventListener('click', async function(e){
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const acao = btn.dataset.acao;
+
+  if(acao === 'toggle-adicional'){
+    const dispAtual = btn.dataset.disp === 'true';
+    await sb.from('adicionais').update({ disponivel: !dispAtual }).eq('id', id);
+    carregarListaAdicionais();
+  }
+
+  if(acao === 'excluir-adicional'){
+    const confirmou = confirm('Tem certeza que quer excluir esse item?');
+    if(!confirmou) return;
+    await sb.from('adicionais').delete().eq('id', id);
+    carregarListaAdicionais();
+  }
+
+  if(acao === 'editar-adicional'){
+    const { data } = await sb.from('adicionais').select('*').eq('id', id).single();
+    if(data){ carregarAdicionalNoFormulario(data); }
+  }
+});
+
+// preenche o formulario com os dados de um adicional pra editar
+function carregarAdicionalNoFormulario(adicional){
+  editandoAdicionalId = adicional.id;
+  tituloFormAdicional.textContent = 'Editar item';
+  document.getElementById('adicional-nome').value = adicional.nome;
+  document.getElementById('adicional-tipo').value = adicional.tipo;
+  document.getElementById('adicional-preco').value = adicional.preco;
+  document.getElementById('adicional-disponivel').checked = adicional.disponivel;
+  btnCancelarAdicional.style.display = 'inline-block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+btnCancelarAdicional.addEventListener('click', function(){
+  limparFormularioAdicional();
+});
+
+function limparFormularioAdicional(){
+  editandoAdicionalId = null;
+  tituloFormAdicional.textContent = 'Adicionar bebida ou molho';
+  formAdicional.reset();
+  document.getElementById('adicional-preco').value = 0;
+  document.getElementById('adicional-disponivel').checked = true;
+  btnCancelarAdicional.style.display = 'none';
+}
+
+// envio do formulario - cria um adicional novo ou atualiza o que ta sendo editado
+formAdicional.addEventListener('submit', async function(e){
+  e.preventDefault();
+  msgAdicional.textContent = 'Salvando...';
+
+  const nome = document.getElementById('adicional-nome').value.trim();
+  const tipo = document.getElementById('adicional-tipo').value;
+  const preco = parseFloat(document.getElementById('adicional-preco').value);
+  const disponivel = document.getElementById('adicional-disponivel').checked;
+
+  if(!nome || isNaN(preco)){
+    msgAdicional.textContent = 'Preenche pelo menos o nome e o preço.';
+    return;
+  }
+
+  const dadosAdicional = { nome: nome, tipo: tipo, preco: preco, disponivel: disponivel };
+
+  let resultado;
+  if(editandoAdicionalId){
+    resultado = await sb.from('adicionais').update(dadosAdicional).eq('id', editandoAdicionalId);
+  } else {
+    resultado = await sb.from('adicionais').insert(dadosAdicional);
+  }
+
+  if(resultado.error){
+    msgAdicional.textContent = 'Erro ao salvar: ' + resultado.error.message;
+    return;
+  }
+
+  msgAdicional.textContent = 'Salvo!';
+  limparFormularioAdicional();
+  carregarListaAdicionais();
+  setTimeout(function(){ msgAdicional.textContent = ''; }, 2500);
 });
 
 // ===== AVALIACOES (moderacao) =====

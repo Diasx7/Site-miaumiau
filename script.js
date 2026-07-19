@@ -48,15 +48,15 @@ function desenhaGrupo(idGrupo, pratos){
   }).join('');
 }
 
-// clique num card do cardapio abre o modal com os detalhes do prato
+// clique num card do cardapio abre o modal de pedido com os detalhes do prato
 document.querySelector('.grade-cardapio').addEventListener('click', function(e){
   const cartao = e.target.closest('.prato');
   if(!cartao) return;
   const prato = cachePratos.find(function(p){ return String(p.id) === cartao.dataset.id; });
-  if(prato) abrirModalPrato(prato);
+  if(prato) abrirModalPedido(prato);
 });
 
-// ===== MODAL DO PRATO =====
+// ===== MODAL DE PEDIDO (usado tanto pelo prato quanto pelo combo) =====
 
 const modalPrato = document.getElementById('modal-prato');
 const modalFoto = document.getElementById('modal-foto');
@@ -64,29 +64,153 @@ const modalNome = document.getElementById('modal-nome');
 const modalDescricao = document.getElementById('modal-descricao');
 const modalPreco = document.getElementById('modal-preco');
 const btnFecharModal = document.getElementById('btn-fechar-modal');
+const blocoBebida = document.getElementById('bloco-bebida');
+const chipsBebida = document.getElementById('chips-bebida');
+const blocoMolho = document.getElementById('bloco-molho');
+const chipsMolho = document.getElementById('chips-molho');
+const modalTotalValor = document.getElementById('modal-total-valor');
+const modalCodigo = document.getElementById('modal-codigo');
+const btnPedirWhatsapp = document.getElementById('btn-pedir-whatsapp');
 
-function abrirModalPrato(prato){
-  if(prato.foto_url){
-    modalFoto.src = prato.foto_url;
+let bebidasDisponiveis = [];
+let molhosDisponiveis = [];
+let bebidaSelecionada = null; // null = "sem bebida"
+let molhoSelecionado = null; // null = "sem molho"
+let itemAtual = null; // prato ou combo que esta aberto no modal
+let codigoPedido = '';
+let whatsappNumero = ''; // vem da tabela configuracoes
+
+// busca as bebidas e molhos disponiveis (usados nos chips do modal)
+async function carregarAdicionais(){
+  const { data, error } = await sb
+    .from('adicionais')
+    .select('*')
+    .eq('disponivel', true)
+    .order('ordem', { ascending: true });
+
+  if(error){
+    console.error('erro ao buscar adicionais', error);
+    return;
+  }
+
+  bebidasDisponiveis = data.filter(function(a){ return a.tipo === 'bebida'; });
+  molhosDisponiveis = data.filter(function(a){ return a.tipo === 'molho'; });
+}
+
+// gera um codigo curto pro pedido, tipo #MM-4821
+function gerarCodigoPedido(){
+  const numero = Math.floor(1000 + Math.random() * 9000);
+  return '#MM-' + numero;
+}
+
+// monta os chips de uma lista de adicionais (bebida ou molho), com a opcao "sem X" primeiro
+function montarChips(lista, nomeAdicional){
+  let html = '<button type="button" class="chip chip-selecionado" data-id="">Sem ' + nomeAdicional + '</button>';
+  html += lista.map(function(item){
+    const precoTexto = Number(item.preco) > 0 ? ('R$ ' + Number(item.preco).toFixed(2).replace('.', ',')) : 'Grátis';
+    return '<button type="button" class="chip" data-id="' + item.id + '">' + escapeHtml(item.nome) + ' <small>' + precoTexto + '</small></button>';
+  }).join('');
+  return html;
+}
+
+// marca visualmente qual chip ta selecionado dentro de um container
+function selecionarChip(container, chipClicado){
+  container.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('chip-selecionado'); });
+  chipClicado.classList.add('chip-selecionado');
+}
+
+chipsBebida.addEventListener('click', function(e){
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  selecionarChip(chipsBebida, chip);
+  bebidaSelecionada = chip.dataset.id ? bebidasDisponiveis.find(function(b){ return String(b.id) === chip.dataset.id; }) : null;
+  atualizarTotal();
+});
+
+chipsMolho.addEventListener('click', function(e){
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  selecionarChip(chipsMolho, chip);
+  molhoSelecionado = chip.dataset.id ? molhosDisponiveis.find(function(m){ return String(m.id) === chip.dataset.id; }) : null;
+  atualizarTotal();
+});
+
+// soma prato/combo + bebida + molho e atualiza o total e o botao do whatsapp
+function atualizarTotal(){
+  let total = Number(itemAtual.preco);
+  if(bebidaSelecionada) total += Number(bebidaSelecionada.preco);
+  if(molhoSelecionado) total += Number(molhoSelecionado.preco);
+  modalTotalValor.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
+  atualizarBotaoWhatsapp(total);
+}
+
+// monta a mensagem do whatsapp com o codigo do pedido e os itens escolhidos
+function atualizarBotaoWhatsapp(total){
+  if(!whatsappNumero){
+    btnPedirWhatsapp.style.display = 'none';
+    modalCodigo.style.display = 'none';
+    return;
+  }
+
+  btnPedirWhatsapp.style.display = '';
+  modalCodigo.style.display = '';
+  modalCodigo.textContent = 'Código do pedido: ' + codigoPedido;
+
+  let mensagem = 'Pedido ' + codigoPedido + ' — Olá! Quero pedir: 1x ' + itemAtual.nome;
+  if(bebidaSelecionada) mensagem += ' + ' + bebidaSelecionada.nome;
+  if(molhoSelecionado) mensagem += ' + ' + molhoSelecionado.nome;
+  mensagem += ' — Total: R$ ' + total.toFixed(2).replace('.', ',');
+
+  btnPedirWhatsapp.href = 'https://wa.me/' + whatsappNumero + '?text=' + encodeURIComponent(mensagem);
+}
+
+// abre o modal de pedido pra um prato ou um combo (os dois usam { nome, preco, descricao, foto_url })
+function abrirModalPedido(item){
+  itemAtual = item;
+
+  if(item.foto_url){
+    modalFoto.src = item.foto_url;
     modalFoto.style.display = 'block';
   } else {
     modalFoto.style.display = 'none';
   }
-  modalNome.textContent = prato.nome;
-  modalDescricao.textContent = prato.descricao || '';
-  modalPreco.textContent = 'R$ ' + Number(prato.preco).toFixed(2).replace('.', ',');
+  modalNome.textContent = item.nome;
+  modalDescricao.textContent = item.descricao || '';
+  modalPreco.textContent = 'R$ ' + Number(item.preco).toFixed(2).replace('.', ',');
+
+  // bloco de bebida - so aparece se tiver bebida cadastrada
+  bebidaSelecionada = null;
+  if(bebidasDisponiveis.length > 0){
+    chipsBebida.innerHTML = montarChips(bebidasDisponiveis, 'bebida');
+    blocoBebida.style.display = 'block';
+  } else {
+    blocoBebida.style.display = 'none';
+  }
+
+  // bloco de molho - so aparece se tiver molho cadastrado
+  molhoSelecionado = null;
+  if(molhosDisponiveis.length > 0){
+    chipsMolho.innerHTML = montarChips(molhosDisponiveis, 'molho');
+    blocoMolho.style.display = 'block';
+  } else {
+    blocoMolho.style.display = 'none';
+  }
+
+  codigoPedido = gerarCodigoPedido();
+  atualizarTotal();
+
   modalPrato.classList.add('aberto');
 }
 
-function fecharModalPrato(){
+function fecharModalPedido(){
   modalPrato.classList.remove('aberto');
 }
 
-btnFecharModal.addEventListener('click', fecharModalPrato);
+btnFecharModal.addEventListener('click', fecharModalPedido);
 
 // fecha o modal se clicar fora da caixa (no fundo escurecido)
 modalPrato.addEventListener('click', function(e){
-  if(e.target === modalPrato) fecharModalPrato();
+  if(e.target === modalPrato) fecharModalPedido();
 });
 
 // evita que nome/descricao com caracter estranho quebre o html
@@ -184,6 +308,7 @@ async function carregarFotosFachada(){
 // ===== COMBO EM ROTACAO (banner da secao Combo) =====
 
 let combosDisponiveis = [];
+let indiceComboAtual = 0; // guarda qual combo ta sendo mostrado agora, pra abrir o modal certo no clique
 
 // busca os combos disponiveis e mostra o banner (ou esconde a secao se nao tiver nenhum)
 async function carregarCombos(){
@@ -208,16 +333,16 @@ async function carregarCombos(){
   }
 
   combosDisponiveis = data;
+  indiceComboAtual = 0;
   desenhaCombo(0);
 
   // com mais de um combo, troca sozinho a cada 6 segundos com fade
   if(data.length > 1){
-    let indiceCombo = 0;
     setInterval(function(){
-      indiceCombo = (indiceCombo + 1) % combosDisponiveis.length;
+      indiceComboAtual = (indiceComboAtual + 1) % combosDisponiveis.length;
       banner.style.opacity = 0;
       setTimeout(function(){
-        desenhaCombo(indiceCombo);
+        desenhaCombo(indiceComboAtual);
         banner.style.opacity = 1;
       }, 600);
     }, 6000);
@@ -236,6 +361,12 @@ function desenhaCombo(indice){
     '</div>' +
     '<div class="combo-preco">R$ ' + Number(c.preco).toFixed(2).replace('.', ',') + '</div>';
 }
+
+// clique no banner abre o modal de pedido com o combo que ta sendo mostrado
+document.getElementById('combo-banner').addEventListener('click', function(){
+  if(combosDisponiveis.length === 0) return;
+  abrirModalPedido(combosDisponiveis[indiceComboAtual]);
+});
 
 // deixa o numero de whatsapp bonitinho: 5534999999999 -> (34) 99999-9999
 function formatarWhatsapp(numero){
@@ -406,10 +537,11 @@ async function carregarConfiguracoes(){
     if(eyebrow) eyebrow.textContent = data.cidade + ' • Burgers & Espetinhos';
   }
 
-  // whatsapp no botao do header
+  // whatsapp no botao do header (e guarda o numero pro botao de pedir no modal)
   if(data.whatsapp){
     const btnWhats = document.getElementById('btn-whatsapp-header');
     if(btnWhats) btnWhats.href = 'https://wa.me/' + data.whatsapp;
+    whatsappNumero = data.whatsapp;
   }
 
   // endereco
@@ -481,9 +613,10 @@ async function carregarConfiguracoes(){
   }
 }
 
-// busca o cardapio, fotos, combos, avaliacoes e configuracoes assim que a pagina carrega
+// busca o cardapio, fotos, combos, adicionais, avaliacoes e configuracoes assim que a pagina carrega
 carregarCardapio();
 carregarFotosFachada();
 carregarCombos();
+carregarAdicionais();
 carregarAvaliacoes();
 carregarConfiguracoes();

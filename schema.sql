@@ -203,3 +203,39 @@ using (auth.role() = 'authenticated');
 create policy "admin pode excluir avaliacao"
 on avaliacoes for delete
 using (auth.role() = 'authenticated');
+
+
+-- ========================================================
+-- TABELA DE ADICIONAIS (bebidas e molhos do pedido)
+-- ========================================================
+
+create table adicionais (
+  id bigint generated always as identity primary key,
+  nome text not null,
+  tipo text not null check (tipo in ('bebida', 'molho')),
+  preco numeric default 0,
+  disponivel boolean default true,
+  ordem int default 0
+);
+
+alter table adicionais enable row level security;
+
+-- qualquer visitante pode ver os adicionais (precisa aparecer no modal do site)
+create policy "leitura publica dos adicionais"
+on adicionais for select
+using (true);
+
+-- só usuario logado pode criar adicional
+create policy "admin pode criar adicional"
+on adicionais for insert
+with check (auth.role() = 'authenticated');
+
+-- só usuario logado pode editar adicional
+create policy "admin pode editar adicional"
+on adicionais for update
+using (auth.role() = 'authenticated');
+
+-- só usuario logado pode excluir adicional
+create policy "admin pode excluir adicional"
+on adicionais for delete
+using (auth.role() = 'authenticated');

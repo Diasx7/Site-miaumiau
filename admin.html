@@ -160,6 +160,51 @@
       </div>
     </section>
 
+    <!-- bebidas e molhos que o cliente escolhe no modal do prato/combo -->
+    <section class="caixa">
+      <h2 id="titulo-form-adicional">Adicionar bebida ou molho</h2>
+      <form id="form-adicional" class="form-prato">
+
+        <div class="campo">
+          <label>Nome</label>
+          <input type="text" id="adicional-nome" required placeholder="Ex: Coca-Cola lata">
+        </div>
+
+        <div class="linha-dois-campos">
+          <div class="campo">
+            <label>Tipo</label>
+            <select id="adicional-tipo">
+              <option value="bebida">Bebida</option>
+              <option value="molho">Molho</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Preço (R$, deixa 0 se for grátis)</label>
+            <input type="number" id="adicional-preco" step="0.01" min="0" value="0" required>
+          </div>
+        </div>
+
+        <div class="campo campo-checkbox">
+          <label><input type="checkbox" id="adicional-disponivel" checked> Disponível pro cliente escolher</label>
+        </div>
+
+        <p class="msg-form" id="msg-adicional"></p>
+
+        <div class="botoes-form">
+          <button type="submit" class="btn-principal">Salvar</button>
+          <button type="button" id="btn-cancelar-adicional" class="btn-fora-mini" style="display:none;">Cancelar edição</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- lista das bebidas e molhos ja cadastrados -->
+    <section class="caixa">
+      <h2>Bebidas e molhos cadastrados</h2>
+      <div id="lista-adicionais" class="lista-pratos">
+        <p>Carregando...</p>
+      </div>
+    </section>
+
     <!-- avaliacoes de clientes - precisam ser aprovadas antes de aparecer no site -->
     <section class="caixa">
       <h2 id="titulo-avaliacoes">Avaliações</h2>
