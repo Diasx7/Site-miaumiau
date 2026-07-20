@@ -1,48 +1,48 @@
 # Miau Miau Burgers & Espetinhos
 
-Site de hamburgueria e espetaria com cardápio dinâmico e painel administrativo.
+Site de hamburgueria e espetaria com cardápio dinâmico, pedidos pelo WhatsApp
+e painel administrativo completo. O dono gerencia tudo sozinho pelo painel,
+sem mexer em código.
 
-O dono do estabelecimento consegue adicionar, editar e remover itens do cardápio
-pelo painel, sem precisar mexer em código. As informações do site (endereço,
-horário, contato, redes sociais) também são editáveis pelo painel.
+## O que o site faz
 
-## Como funciona
+**Pro cliente:**
+- Cardápio com fotos, separado em burgers e espetinhos
+- Clicou no prato, abre o detalhe com foto, descrição e preço
+- Escolhe bebida e molho no pedido, com total calculado na hora
+- Faz o pedido direto pelo WhatsApp, com mensagem pronta e código de referência
+- Combos da casa em destaque, em rotação automática
+- Fotos do local em carrossel
+- Avaliações de outros clientes e formulário pra deixar a sua
 
-- **Site público** (`index.html`): mostra o cardápio, informações e contato.
-  Os dados vêm do banco em tempo real.
-- **Painel admin** (`admin.html`): protegido por login. Gerencia o cardápio
-  (com upload de fotos) e as informações do estabelecimento.
+**Pro dono (painel em /admin.html, protegido por login):**
+- Cadastra, edita e remove itens do cardápio, com upload de foto
+- Marca item como disponível ou esgotado na hora
+- Gerencia combos, bebidas e molhos
+- Modera as avaliações dos clientes (aprova ou exclui antes de aparecer no site)
+- Edita as informações do site: endereço, horários, WhatsApp, telefone,
+  redes sociais e mapa
+- Sobe fotos da fachada
 
 ## Tecnologias
 
 - HTML, CSS e JavaScript puro
-- Supabase (banco Postgres, autenticação e storage das fotos)
-- Hospedagem na Vercel
+- Supabase (banco Postgres, autenticação, storage de fotos e regras de
+  acesso via RLS)
+- Hospedagem na Vercel com deploy automático a cada push
 
 ## Rodando local
 
-1. Cria um projeto no Supabase e roda o `schema.sql` no SQL Editor
-2. Cria o bucket `fotos-cardapio` no Storage (público)
-3. Cria um usuário em Authentication > Users
-4. Preenche a URL e a chave anon do projeto no `config.js`
-5. Sobe um servidor local na pasta:
+1. Cria um projeto no Supabase e roda o `schema.sql` inteiro no SQL Editor
+2. Cria o bucket `fotos-cardapio` no Storage (marcado como público)
+3. Cria o usuário do painel em Authentication > Users (marca Auto Confirm)
+4. Preenche a URL e a chave publishable do projeto no `config.js`
+5. Sobe um servidor local:
 
 ```bash
 npx serve -p 8000
 ```
 
-O site fica em `localhost:8000` e o painel em `localhost:8000/admin.html`.
+Site em `localhost:8000`, painel em `localhost:8000/admin.html`.
 
 ## Estrutura
-
-```
-index.html      site público
-admin.html      painel administrativo
-script.js       lógica do site público
-admin.js        lógica do painel
-config.js       chaves do Supabase
-schema.sql      estrutura do banco e regras de acesso
-style.css       estilo do site
-admin.css       estilo do painel
-img/            logo
-```
