@@ -52,6 +52,7 @@ function mostrarPainel(){
   carregarFotosFachada();
   carregarListaCombos();
   carregarListaAdicionais();
+  carregarListaCupons();
   carregarAvaliacoes();
 }
 
@@ -218,6 +219,7 @@ async function carregarConfiguracoes(){
   document.getElementById('config-whatsapp').value = data.whatsapp || '';
   document.getElementById('config-telefone').value = data.telefone || '';
   document.getElementById('config-endereco').value = data.endereco || '';
+  document.getElementById('config-taxa-entrega').value = data.taxa_entrega || 0;
   document.getElementById('config-horario-semana').value = data.horario_semana || '';
   document.getElementById('config-horario-fds').value = data.horario_fds || '';
   document.getElementById('config-dia-folga').value = data.dia_folga || '';
@@ -236,6 +238,7 @@ formConfig.addEventListener('submit', async function(e){
     whatsapp: document.getElementById('config-whatsapp').value.trim(),
     telefone: document.getElementById('config-telefone').value.trim(),
     endereco: document.getElementById('config-endereco').value.trim(),
+    taxa_entrega: parseFloat(document.getElementById('config-taxa-entrega').value) || 0,
     horario_semana: document.getElementById('config-horario-semana').value.trim(),
     horario_fds: document.getElementById('config-horario-fds').value.trim(),
     dia_folga: document.getElementById('config-dia-folga').value.trim(),
@@ -583,6 +586,97 @@ formAdicional.addEventListener('submit', async function(e){
   limparFormularioAdicional();
   carregarListaAdicionais();
   setTimeout(function(){ msgAdicional.textContent = ''; }, 2500);
+});
+
+// ===== CUPONS DE DESCONTO (usados no carrinho do site) =====
+
+const formCupom = document.getElementById('form-cupom');
+const listaCupons = document.getElementById('lista-cupons');
+const msgCupomAdmin = document.getElementById('msg-cupom-admin');
+
+// busca todos os cupons (ativos ou nao) pra mostrar na lista do painel
+async function carregarListaCupons(){
+  listaCupons.innerHTML = '<p>Carregando...</p>';
+  const { data, error } = await sb.from('cupons').select('*').order('criado_em', { ascending: false });
+
+  if(error){
+    listaCupons.innerHTML = '<p>Erro ao carregar: ' + error.message + '</p>';
+    return;
+  }
+  if(data.length === 0){
+    listaCupons.innerHTML = '<p>Nenhum cupom cadastrado ainda.</p>';
+    return;
+  }
+
+  listaCupons.innerHTML = data.map(function(c){
+    const descontoTexto = c.tipo === 'percentual'
+      ? Number(c.valor) + '% de desconto'
+      : 'R$ ' + Number(c.valor).toFixed(2).replace('.', ',') + ' de desconto';
+
+    return '<div class="item-lista">' +
+      '<div class="item-info">' +
+        '<strong>' + escapeHtml(c.codigo) + '</strong>' +
+        '<span>' + descontoTexto + '</span>' +
+      '</div>' +
+      '<div class="item-acoes">' +
+        '<button class="btn-mini ' + (c.ativo ? 'ok' : 'esgotado') + '" data-acao="toggle-cupom" data-id="' + c.id + '" data-ativo="' + c.ativo + '">' +
+          (c.ativo ? 'Ativo' : 'Desativado') +
+        '</button>' +
+        '<button class="btn-mini perigo" data-acao="excluir-cupom" data-id="' + c.id + '">Excluir</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// cliques nos botoes da lista de cupons (ativar/desativar, excluir)
+listaCupons.addEventListener('click', async function(e){
+  const btn = e.target.closest('button');
+  if(!btn) return;
+  const id = btn.dataset.id;
+  const acao = btn.dataset.acao;
+
+  if(acao === 'toggle-cupom'){
+    const ativoAtual = btn.dataset.ativo === 'true';
+    await sb.from('cupons').update({ ativo: !ativoAtual }).eq('id', id);
+    carregarListaCupons();
+  }
+
+  if(acao === 'excluir-cupom'){
+    const confirmou = confirm('Tem certeza que quer excluir esse cupom?');
+    if(!confirmou) return;
+    await sb.from('cupons').delete().eq('id', id);
+    carregarListaCupons();
+  }
+});
+
+// cria um cupom novo - o codigo sempre salvo em maiusculas
+formCupom.addEventListener('submit', async function(e){
+  e.preventDefault();
+  msgCupomAdmin.textContent = 'Salvando...';
+
+  const codigo = document.getElementById('cupom-codigo').value.trim().toUpperCase();
+  const tipo = document.getElementById('cupom-tipo').value;
+  const valor = parseFloat(document.getElementById('cupom-valor').value);
+
+  if(!codigo || isNaN(valor) || valor <= 0){
+    msgCupomAdmin.textContent = 'Preenche o código e um valor maior que zero.';
+    return;
+  }
+
+  const { error } = await sb.from('cupons').insert({ codigo: codigo, tipo: tipo, valor: valor });
+
+  if(error){
+    // codigo unique: se ja existe, o banco recusa
+    msgCupomAdmin.textContent = error.code === '23505'
+      ? 'Já existe um cupom com esse código.'
+      : 'Erro ao salvar: ' + error.message;
+    return;
+  }
+
+  msgCupomAdmin.textContent = 'Cupom criado!';
+  formCupom.reset();
+  carregarListaCupons();
+  setTimeout(function(){ msgCupomAdmin.textContent = ''; }, 2500);
 });
 
 // ===== AVALIACOES (moderacao) =====

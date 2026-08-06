@@ -48,8 +48,20 @@ function desenhaGrupo(idGrupo, pratos){
   }).join('');
 }
 
-// clique num card do cardapio abre o modal de pedido com os detalhes do prato
+// clique na grade do cardapio: botao de bebida joga direto no carrinho, card de prato abre o modal
 document.querySelector('.grade-cardapio').addEventListener('click', function(e){
+  const btnBebida = e.target.closest('.btn-add-bebida');
+  if(btnBebida){
+    const bebida = bebidasDisponiveis.find(function(b){ return String(b.id) === btnBebida.dataset.id; });
+    if(bebida){
+      adicionarAoCarrinho(bebida.nome, Number(bebida.preco), []);
+      // feedback rapido no botao
+      btnBebida.textContent = 'Adicionado ✓';
+      setTimeout(function(){ btnBebida.textContent = '+ Adicionar'; }, 1200);
+    }
+    return;
+  }
+
   const cartao = e.target.closest('.prato');
   if(!cartao) return;
   const prato = cachePratos.find(function(p){ return String(p.id) === cartao.dataset.id; });
@@ -69,16 +81,15 @@ const chipsBebida = document.getElementById('chips-bebida');
 const blocoMolho = document.getElementById('bloco-molho');
 const chipsMolho = document.getElementById('chips-molho');
 const modalTotalValor = document.getElementById('modal-total-valor');
-const modalCodigo = document.getElementById('modal-codigo');
-const btnPedirWhatsapp = document.getElementById('btn-pedir-whatsapp');
+const btnAdicionarCarrinho = document.getElementById('btn-adicionar-carrinho');
 
 let bebidasDisponiveis = [];
 let molhosDisponiveis = [];
 let bebidaSelecionada = null; // null = "sem bebida"
 let molhoSelecionado = null; // null = "sem molho"
 let itemAtual = null; // prato ou combo que esta aberto no modal
-let codigoPedido = '';
 let whatsappNumero = ''; // vem da tabela configuracoes
+let taxaEntrega = 0; // vem da tabela configuracoes
 
 // busca as bebidas e molhos disponiveis (usados nos chips do modal)
 async function carregarAdicionais(){
@@ -95,6 +106,31 @@ async function carregarAdicionais(){
 
   bebidasDisponiveis = data.filter(function(a){ return a.tipo === 'bebida'; });
   molhosDisponiveis = data.filter(function(a){ return a.tipo === 'molho'; });
+  desenhaBebidas();
+}
+
+// desenha os cards da aba Bebidas (adicionar vai direto pro carrinho, sem modal)
+function desenhaBebidas(){
+  const container = document.getElementById('bebidas');
+  if(!container) return;
+
+  if(bebidasDisponiveis.length === 0){
+    container.innerHTML = '<p style="color:var(--creme-fraco);font-size:14px;">Nenhuma bebida disponível no momento.</p>';
+    return;
+  }
+
+  container.innerHTML = bebidasDisponiveis.map(function(b){
+    const precoTexto = Number(b.preco) > 0 ? formatarPreco(b.preco) : 'Grátis';
+    return '<div class="prato prato-bebida">' +
+      '<div class="prato-linha">' +
+        '<div class="prato-nome">' + escapeHtml(b.nome) + '</div>' +
+        '<div class="prato-preco">' + precoTexto + '</div>' +
+      '</div>' +
+      '<div class="bebida-rodape">' +
+        '<button type="button" class="btn-add-bebida" data-id="' + b.id + '">+ Adicionar</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 // gera um codigo curto pro pedido, tipo #MM-4821
@@ -135,34 +171,22 @@ chipsMolho.addEventListener('click', function(e){
   atualizarTotal();
 });
 
-// soma prato/combo + bebida + molho e atualiza o total e o botao do whatsapp
+// soma prato/combo + bebida + molho e atualiza o total mostrado no modal
 function atualizarTotal(){
   let total = Number(itemAtual.preco);
   if(bebidaSelecionada) total += Number(bebidaSelecionada.preco);
   if(molhoSelecionado) total += Number(molhoSelecionado.preco);
-  modalTotalValor.textContent = 'R$ ' + total.toFixed(2).replace('.', ',');
-  atualizarBotaoWhatsapp(total);
+  modalTotalValor.textContent = formatarPreco(total);
 }
 
-// monta a mensagem do whatsapp com o codigo do pedido e os itens escolhidos
-function atualizarBotaoWhatsapp(total){
-  if(!whatsappNumero){
-    btnPedirWhatsapp.style.display = 'none';
-    modalCodigo.style.display = 'none';
-    return;
-  }
-
-  btnPedirWhatsapp.style.display = '';
-  modalCodigo.style.display = '';
-  modalCodigo.textContent = 'Código do pedido: ' + codigoPedido;
-
-  let mensagem = 'Pedido ' + codigoPedido + ' — Olá! Quero pedir: 1x ' + itemAtual.nome;
-  if(bebidaSelecionada) mensagem += ' + ' + bebidaSelecionada.nome;
-  if(molhoSelecionado) mensagem += ' + ' + molhoSelecionado.nome;
-  mensagem += ' — Total: R$ ' + total.toFixed(2).replace('.', ',');
-
-  btnPedirWhatsapp.href = 'https://wa.me/' + whatsappNumero + '?text=' + encodeURIComponent(mensagem);
-}
+// botao do modal: joga o prato/combo com os opcionais escolhidos no carrinho e fecha
+btnAdicionarCarrinho.addEventListener('click', function(){
+  const opcionais = [];
+  if(bebidaSelecionada) opcionais.push({ nome: bebidaSelecionada.nome, preco: Number(bebidaSelecionada.preco) });
+  if(molhoSelecionado) opcionais.push({ nome: molhoSelecionado.nome, preco: Number(molhoSelecionado.preco) });
+  adicionarAoCarrinho(itemAtual.nome, Number(itemAtual.preco), opcionais);
+  fecharModalPedido();
+});
 
 // abre o modal de pedido pra um prato ou um combo (os dois usam { nome, preco, descricao, foto_url })
 function abrirModalPedido(item){
@@ -196,7 +220,6 @@ function abrirModalPedido(item){
     blocoMolho.style.display = 'none';
   }
 
-  codigoPedido = gerarCodigoPedido();
   atualizarTotal();
 
   modalPrato.classList.add('aberto');
@@ -219,6 +242,255 @@ function escapeHtml(texto){
   div.textContent = texto;
   return div.innerHTML;
 }
+
+// deixa o preco no formato brasileiro: 12.5 -> R$ 12,50
+function formatarPreco(valor){
+  return 'R$ ' + Number(valor).toFixed(2).replace('.', ',');
+}
+
+// ===== CARRINHO DE COMPRAS =====
+
+const CHAVE_CARRINHO = 'carrinho'; // chave propria no sessionStorage (separada da avaliacao)
+
+const btnCarrinhoFlutuante = document.getElementById('btn-carrinho-flutuante');
+const modalCarrinho = document.getElementById('modal-carrinho');
+const btnFecharCarrinho = document.getElementById('btn-fechar-carrinho');
+const carrinhoCodigo = document.getElementById('carrinho-codigo');
+const carrinhoItens = document.getElementById('carrinho-itens');
+const toggleEntrega = document.getElementById('toggle-entrega');
+const campoEnderecoWrap = document.getElementById('campo-endereco-wrap');
+const inputEndereco = document.getElementById('carrinho-endereco');
+const inputCupom = document.getElementById('carrinho-cupom');
+const btnAplicarCupom = document.getElementById('btn-aplicar-cupom');
+const msgCupom = document.getElementById('msg-cupom');
+const carrinhoResumo = document.getElementById('carrinho-resumo');
+const msgCarrinho = document.getElementById('msg-carrinho');
+const btnEnviarPedido = document.getElementById('btn-enviar-pedido');
+
+// o carrinho guarda o codigo do pedido e a lista de itens
+let carrinho = { codigo: '', itens: [] };
+let formaEntrega = 'entrega'; // 'entrega' ou 'retirada'
+let cupomAplicado = null; // linha da tabela cupons quando o cliente aplica um valido
+
+// recupera o carrinho salvo na sessao (se a pessoa navegou e voltou)
+function carregarCarrinhoSalvo(){
+  const salvo = sessionStorage.getItem(CHAVE_CARRINHO);
+  if(!salvo) return;
+  try {
+    carrinho = JSON.parse(salvo);
+  } catch(e) {
+    carrinho = { codigo: '', itens: [] };
+  }
+}
+
+function salvarCarrinho(){
+  sessionStorage.setItem(CHAVE_CARRINHO, JSON.stringify(carrinho));
+}
+
+// preco de um item somando o prato + opcionais
+function precoUnitario(item){
+  let total = Number(item.preco);
+  item.opcionais.forEach(function(o){ total += Number(o.preco); });
+  return total;
+}
+
+// adiciona um item no carrinho - se ja tem um igual (mesmo nome e opcionais), so aumenta a quantidade
+function adicionarAoCarrinho(nome, preco, opcionais){
+  const chave = nome + '|' + opcionais.map(function(o){ return o.nome; }).join(',');
+  const existente = carrinho.itens.find(function(i){ return i.chave === chave; });
+
+  if(existente){
+    existente.qtd += 1;
+  } else {
+    carrinho.itens.push({ chave: chave, nome: nome, preco: preco, opcionais: opcionais, qtd: 1 });
+  }
+
+  // o codigo do pedido nasce quando o primeiro item entra e dura a sessao toda
+  if(!carrinho.codigo) carrinho.codigo = gerarCodigoPedido();
+
+  salvarCarrinho();
+  atualizarBotaoFlutuante();
+}
+
+// soma tudo: subtotal dos itens, taxa de entrega e desconto do cupom
+function calcularTotais(){
+  let subtotal = 0;
+  carrinho.itens.forEach(function(i){ subtotal += precoUnitario(i) * i.qtd; });
+
+  let desconto = 0;
+  if(cupomAplicado){
+    if(cupomAplicado.tipo === 'percentual'){
+      desconto = subtotal * Number(cupomAplicado.valor) / 100;
+    } else {
+      desconto = Number(cupomAplicado.valor);
+    }
+    if(desconto > subtotal) desconto = subtotal; // desconto nao passa do subtotal
+  }
+
+  const taxa = formaEntrega === 'entrega' ? Number(taxaEntrega) : 0;
+  const total = subtotal - desconto + taxa;
+
+  return { subtotal: subtotal, desconto: desconto, taxa: taxa, total: total };
+}
+
+// mostra/esconde o botao flutuante conforme o carrinho
+function atualizarBotaoFlutuante(){
+  let qtd = 0;
+  carrinho.itens.forEach(function(i){ qtd += i.qtd; });
+
+  if(qtd === 0){
+    btnCarrinhoFlutuante.style.display = 'none';
+    return;
+  }
+
+  let subtotal = 0;
+  carrinho.itens.forEach(function(i){ subtotal += precoUnitario(i) * i.qtd; });
+  btnCarrinhoFlutuante.textContent = '🛒 Ver carrinho (' + qtd + ') · ' + formatarPreco(subtotal);
+  btnCarrinhoFlutuante.style.display = 'flex';
+}
+
+// desenha a lista de itens e o resumo dentro do modal do carrinho
+function desenhaCarrinho(){
+  carrinhoCodigo.textContent = carrinho.codigo;
+
+  if(carrinho.itens.length === 0){
+    carrinhoItens.innerHTML = '<p class="carrinho-vazio">Seu carrinho está vazio.</p>';
+    carrinhoResumo.innerHTML = '';
+    btnEnviarPedido.disabled = true;
+    return;
+  }
+
+  carrinhoItens.innerHTML = carrinho.itens.map(function(i, indice){
+    const opcTexto = i.opcionais.map(function(o){ return escapeHtml(o.nome); }).join(', ');
+    return '<div class="carrinho-item">' +
+      '<span class="carrinho-item-nome">' + i.qtd + 'x ' + escapeHtml(i.nome) +
+        (opcTexto ? ' <small>(' + opcTexto + ')</small>' : '') +
+      '</span>' +
+      '<span class="carrinho-item-preco">' + formatarPreco(precoUnitario(i) * i.qtd) + '</span>' +
+      '<button type="button" class="btn-remover-item" data-indice="' + indice + '" aria-label="remover item">✕</button>' +
+    '</div>';
+  }).join('');
+
+  const t = calcularTotais();
+  let resumoHtml = '<div class="resumo-linha"><span>Subtotal</span><span>' + formatarPreco(t.subtotal) + '</span></div>';
+  if(t.taxa > 0){
+    resumoHtml += '<div class="resumo-linha"><span>Entrega</span><span>' + formatarPreco(t.taxa) + '</span></div>';
+  }
+  if(cupomAplicado){
+    resumoHtml += '<div class="resumo-linha cupom"><span>Cupom ' + escapeHtml(cupomAplicado.codigo) + '</span><span>- ' + formatarPreco(t.desconto) + '</span></div>';
+  }
+  resumoHtml += '<div class="resumo-linha total"><span>Total</span><strong>' + formatarPreco(t.total) + '</strong></div>';
+  carrinhoResumo.innerHTML = resumoHtml;
+
+  // sem whatsapp configurado nao tem pra onde enviar o pedido
+  if(!whatsappNumero){
+    btnEnviarPedido.disabled = true;
+    msgCarrinho.textContent = 'WhatsApp ainda não configurado, não dá pra enviar o pedido.';
+  } else {
+    btnEnviarPedido.disabled = false;
+  }
+}
+
+// abre e fecha o modal do carrinho
+btnCarrinhoFlutuante.addEventListener('click', function(){
+  msgCarrinho.textContent = '';
+  desenhaCarrinho();
+  modalCarrinho.classList.add('aberto');
+});
+
+btnFecharCarrinho.addEventListener('click', function(){
+  modalCarrinho.classList.remove('aberto');
+});
+
+modalCarrinho.addEventListener('click', function(e){
+  if(e.target === modalCarrinho) modalCarrinho.classList.remove('aberto');
+});
+
+// clique no ✕ vermelho remove o item da lista
+carrinhoItens.addEventListener('click', function(e){
+  const btn = e.target.closest('.btn-remover-item');
+  if(!btn) return;
+  carrinho.itens.splice(Number(btn.dataset.indice), 1);
+  salvarCarrinho();
+  atualizarBotaoFlutuante();
+  desenhaCarrinho();
+});
+
+// alterna entre entrega e retirada
+toggleEntrega.addEventListener('click', function(e){
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  toggleEntrega.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('chip-selecionado'); });
+  chip.classList.add('chip-selecionado');
+  formaEntrega = chip.dataset.forma;
+  campoEnderecoWrap.style.display = formaEntrega === 'entrega' ? 'block' : 'none';
+  msgCarrinho.textContent = '';
+  desenhaCarrinho();
+});
+
+// valida o cupom digitado na tabela cupons (so acha os ativos, sem diferenciar maiuscula)
+btnAplicarCupom.addEventListener('click', async function(){
+  const codigo = inputCupom.value.trim();
+  if(!codigo) return;
+
+  msgCupom.textContent = 'Verificando...';
+
+  const { data, error } = await sb
+    .from('cupons')
+    .select('*')
+    .ilike('codigo', codigo)
+    .eq('ativo', true)
+    .limit(1);
+
+  if(error || !data || data.length === 0){
+    cupomAplicado = null;
+    msgCupom.textContent = 'Cupom inválido';
+    desenhaCarrinho();
+    return;
+  }
+
+  cupomAplicado = data[0];
+  msgCupom.textContent = '';
+  desenhaCarrinho();
+});
+
+// monta a mensagem final e abre o whatsapp com o pedido completo
+btnEnviarPedido.addEventListener('click', function(){
+  if(carrinho.itens.length === 0 || !whatsappNumero) return;
+
+  const endereco = inputEndereco.value.trim();
+  if(formaEntrega === 'entrega' && !endereco){
+    msgCarrinho.textContent = 'Preenche o endereço de entrega.';
+    return;
+  }
+
+  const t = calcularTotais();
+
+  let mensagem = 'Pedido ' + carrinho.codigo + ' — Olá! Quero pedir:\n';
+  carrinho.itens.forEach(function(i){
+    const opcTexto = i.opcionais.map(function(o){ return o.nome; }).join(', ');
+    mensagem += i.qtd + 'x ' + i.nome + (opcTexto ? ' (' + opcTexto + ')' : '') + '\n';
+  });
+  mensagem += formaEntrega === 'entrega'
+    ? 'Entrega: ' + endereco + '\n'
+    : 'Retirada no local\n';
+  if(cupomAplicado) mensagem += 'Cupom: ' + cupomAplicado.codigo + '\n';
+  mensagem += 'Total: ' + formatarPreco(t.total);
+
+  // deixa so os digitos do numero antes de montar o link
+  const numeroLimpo = whatsappNumero.replace(/\D/g, '');
+  window.open('https://wa.me/' + numeroLimpo + '?text=' + encodeURIComponent(mensagem), '_blank');
+
+  // pedido enviado, zera tudo
+  carrinho = { codigo: '', itens: [] };
+  sessionStorage.removeItem(CHAVE_CARRINHO);
+  cupomAplicado = null;
+  inputCupom.value = '';
+  inputEndereco.value = '';
+  msgCupom.textContent = '';
+  modalCarrinho.classList.remove('aberto');
+  atualizarBotaoFlutuante();
+});
 
 // troca de aba do cardapio (burgers / espetinhos)
 var abas = document.querySelectorAll('.aba-btn');
@@ -537,12 +809,15 @@ async function carregarConfiguracoes(){
     if(eyebrow) eyebrow.textContent = data.cidade + ' • Burgers & Espetinhos';
   }
 
-  // whatsapp no botao do header (e guarda o numero pro botao de pedir no modal)
+  // whatsapp no botao do header (e guarda o numero pro envio do pedido do carrinho)
   if(data.whatsapp){
     const btnWhats = document.getElementById('btn-whatsapp-header');
     if(btnWhats) btnWhats.href = 'https://wa.me/' + data.whatsapp;
     whatsappNumero = data.whatsapp;
   }
+
+  // taxa de entrega usada no carrinho
+  taxaEntrega = Number(data.taxa_entrega) || 0;
 
   // endereco
   if(data.endereco){
@@ -620,3 +895,7 @@ carregarCombos();
 carregarAdicionais();
 carregarAvaliacoes();
 carregarConfiguracoes();
+
+// recupera o carrinho da sessao e mostra o botao flutuante se tiver item
+carregarCarrinhoSalvo();
+atualizarBotaoFlutuante();

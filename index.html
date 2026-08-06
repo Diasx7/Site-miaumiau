@@ -111,6 +111,7 @@
     <div class="abas reveal">
       <button class="aba-btn ativa" data-aba="burgers">🍔 Burgers</button>
       <button class="aba-btn" data-aba="espetinhos">🍢 Espetinhos</button>
+      <button class="aba-btn" data-aba="bebidas">🥤 Bebidas</button>
     </div>
 
     <div class="grade-cardapio reveal">
@@ -121,6 +122,10 @@
 
       <div class="grupo-pratos" id="espetinhos">
         <p style="color:var(--creme-fraco);font-size:14px;">Carregando cardápio...</p>
+      </div>
+
+      <div class="grupo-pratos" id="bebidas">
+        <p style="color:var(--creme-fraco);font-size:14px;">Carregando bebidas...</p>
       </div>
 
     </div>
@@ -235,8 +240,7 @@
         <span>Total</span>
         <strong id="modal-total-valor">R$ 0,00</strong>
       </div>
-      <p class="modal-codigo" id="modal-codigo"></p>
-      <a href="#" class="btn btn-principal btn-largo" id="btn-pedir-whatsapp" target="_blank" rel="noopener noreferrer">Pedir pelo WhatsApp</a>
+      <button type="button" class="btn btn-principal btn-largo" id="btn-adicionar-carrinho">Adicionar ao carrinho</button>
     </div>
   </div>
 </div>
@@ -269,6 +273,45 @@
       <p class="msg-avaliacao" id="msg-avaliacao"></p>
       <button type="submit" class="btn btn-principal btn-largo">Enviar avaliação</button>
     </form>
+  </div>
+</div>
+
+<!-- ===== BOTAO FLUTUANTE DO CARRINHO (so aparece com item dentro) ===== -->
+<button type="button" class="btn-carrinho-flutuante" id="btn-carrinho-flutuante" style="display:none;">🛒 Ver carrinho</button>
+
+<!-- ===== MODAL DO CARRINHO ===== -->
+<div class="modal-overlay" id="modal-carrinho">
+  <div class="modal-caixa">
+    <button class="modal-fechar" id="btn-fechar-carrinho">&times;</button>
+    <h3>Seu pedido <span class="carrinho-codigo" id="carrinho-codigo"></span></h3>
+
+    <div id="carrinho-itens"></div>
+
+    <!-- escolha entre entrega e retirada, no mesmo estilo dos chips -->
+    <div class="chips-adicionais toggle-entrega" id="toggle-entrega">
+      <button type="button" class="chip chip-selecionado" data-forma="entrega">🛵 Entrega</button>
+      <button type="button" class="chip" data-forma="retirada">🏪 Retirar no local</button>
+    </div>
+
+    <div class="campo-avaliacao" id="campo-endereco-wrap">
+      <label>Endereço de entrega</label>
+      <input type="text" id="carrinho-endereco" maxlength="120" placeholder="Rua, número, bairro">
+    </div>
+
+    <div class="campo-avaliacao">
+      <label>Cupom de desconto</label>
+      <div class="linha-cupom">
+        <input type="text" id="carrinho-cupom" maxlength="20" placeholder="Ex: MIAU10">
+        <button type="button" class="btn-aplicar-cupom" id="btn-aplicar-cupom">Aplicar</button>
+      </div>
+      <p class="msg-cupom" id="msg-cupom"></p>
+    </div>
+
+    <div class="carrinho-resumo" id="carrinho-resumo"></div>
+
+    <p class="msg-carrinho" id="msg-carrinho"></p>
+    <button type="button" class="btn btn-principal btn-largo" id="btn-enviar-pedido">Enviar pedido no WhatsApp</button>
+    <p class="aviso-pagamento">Pagamento combinado na entrega ou retirada.</p>
   </div>
 </div>
 

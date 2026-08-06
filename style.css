@@ -6,6 +6,7 @@
     --laranja-escuro: #e85f12;
     --vermelho: #e8412c;
     --amarelo: #ffc23c;
+    --verde: #4caf50;
     --creme: #fff3de;
     --creme-fraco: #d8c9b3;
     --fonte-display: 'Baloo 2', sans-serif;
@@ -631,7 +632,114 @@
   }
   .modal-total span{ font-size:13px; color: var(--creme-fraco); }
   .modal-total strong{ font-family: var(--fonte-preco); font-size:22px; color: var(--amarelo); }
-  .modal-codigo{ font-size:12px; color: var(--creme-fraco); margin-bottom:12px; }
+
+  /* ===== aba de bebidas (card com botao de adicionar direto) ===== */
+  .prato-bebida{ cursor: default; } /* aqui o clique é so no botao, nao no card */
+  .bebida-rodape{ padding: 0 20px 16px; }
+  .btn-add-bebida{
+    background: var(--laranja);
+    color: var(--preto);
+    border: none;
+    border-radius: 100px;
+    padding: 8px 18px;
+    font-family: var(--fonte-corpo);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    min-height: 44px;
+    transition: background .15s ease;
+  }
+  .btn-add-bebida:hover{ background: var(--laranja-escuro); }
+
+  /* ===== botao flutuante do carrinho ===== */
+  .btn-carrinho-flutuante{
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    z-index: 150; /* abaixo dos modais (200), acima do resto */
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--laranja), var(--vermelho));
+    color: var(--preto);
+    border: none;
+    border-radius: 100px;
+    padding: 14px 22px;
+    font-family: var(--fonte-corpo);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    min-height: 48px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.45);
+  }
+
+  /* ===== modal do carrinho ===== */
+  .carrinho-codigo{
+    font-family: var(--fonte-preco);
+    font-size: 13px;
+    color: var(--creme-fraco);
+    margin-left: 6px;
+  }
+  .carrinho-item{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255,255,255,.08);
+  }
+  .carrinho-item-nome{ flex: 1; font-size: 14px; }
+  .carrinho-item-nome small{ color: var(--creme-fraco); font-size: 12px; }
+  .carrinho-item-preco{
+    font-family: var(--fonte-preco);
+    font-size: 13px;
+    color: var(--amarelo);
+    white-space: nowrap;
+  }
+  .btn-remover-item{
+    background: none;
+    border: none;
+    color: var(--vermelho);
+    font-size: 16px;
+    cursor: pointer;
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .carrinho-vazio{ font-size: 14px; color: var(--creme-fraco); padding: 10px 0; }
+
+  .toggle-entrega{ margin: 18px 0 16px; }
+
+  .linha-cupom{ display: flex; gap: 8px; }
+  .linha-cupom input{ flex: 1; }
+  .btn-aplicar-cupom{
+    background: var(--laranja);
+    color: var(--preto);
+    border: none;
+    border-radius: 100px;
+    padding: 0 20px;
+    font-family: var(--fonte-corpo);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    min-height: 44px;
+  }
+  .msg-cupom{ font-size: 12px; color: var(--vermelho); min-height: 16px; margin-top: 6px; }
+
+  .carrinho-resumo{ margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.08); }
+  .resumo-linha{
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--creme-fraco);
+    margin-bottom: 6px;
+  }
+  .resumo-linha.cupom{ color: var(--verde); }
+  .resumo-linha.total{ font-size: 15px; color: var(--creme); align-items: center; }
+  .resumo-linha.total strong{ font-family: var(--fonte-preco); font-size: 20px; color: var(--amarelo); }
+
+  .msg-carrinho{ font-size: 13px; color: var(--vermelho); min-height: 18px; margin: 8px 0 4px; text-align: center; }
+  .aviso-pagamento{ font-size: 11px; color: var(--creme-fraco); text-align: center; margin-top: 10px; }
+
+  /* botao desabilitado (whatsapp nao configurado) */
+  .btn:disabled{ opacity: .5; cursor: not-allowed; transform: none; }
 
   /* ===== responsivo ===== */
   @media (max-width: 860px){
@@ -699,4 +807,7 @@
       margin: 22px -20px -20px;
       padding: 16px 20px 20px;
     }
+
+    /* botao do carrinho um pouco mais junto do canto no celular */
+    .btn-carrinho-flutuante{ right: 12px; bottom: 12px; font-size: 13px; padding: 12px 18px; }
   }

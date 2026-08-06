@@ -239,3 +239,51 @@ using (auth.role() = 'authenticated');
 create policy "admin pode excluir adicional"
 on adicionais for delete
 using (auth.role() = 'authenticated');
+
+
+-- ========================================================
+-- TABELA DE CUPONS DE DESCONTO (usados no carrinho do site)
+-- ========================================================
+
+create table cupons (
+  id bigint generated always as identity primary key,
+  codigo text not null unique,
+  tipo text not null check (tipo in ('percentual', 'fixo')),
+  valor numeric not null,
+  ativo boolean default true,
+  criado_em timestamp default now()
+);
+
+alter table cupons enable row level security;
+
+-- visitante do site so consegue ler cupom ativo (pra validar no carrinho)
+create policy "leitura publica de cupom ativo"
+on cupons for select
+using (ativo = true);
+
+-- admin logado ve todos os cupons, inclusive os desativados
+create policy "admin ve todos os cupons"
+on cupons for select
+using (auth.role() = 'authenticated');
+
+-- só usuario logado pode criar cupom
+create policy "admin pode criar cupom"
+on cupons for insert
+with check (auth.role() = 'authenticated');
+
+-- só usuario logado pode editar cupom (ativar/desativar)
+create policy "admin pode editar cupom"
+on cupons for update
+using (auth.role() = 'authenticated');
+
+-- só usuario logado pode excluir cupom
+create policy "admin pode excluir cupom"
+on cupons for delete
+using (auth.role() = 'authenticated');
+
+
+-- ========================================================
+-- CAMPO NOVO NA TABELA CONFIGURACOES: TAXA DE ENTREGA
+-- ========================================================
+
+alter table configuracoes add column taxa_entrega numeric default 0;

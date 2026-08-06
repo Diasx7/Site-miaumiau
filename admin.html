@@ -62,6 +62,11 @@
           <input type="text" id="config-endereco" placeholder="Ex: Rua das Flores, 123 - Centro">
         </div>
 
+        <div class="campo">
+          <label>Taxa de entrega (R$, deixa 0 se não cobrar)</label>
+          <input type="number" id="config-taxa-entrega" step="0.01" min="0" placeholder="Ex: 5.00">
+        </div>
+
         <div class="linha-dois-campos">
           <div class="campo">
             <label>Horário dias de semana</label>
@@ -201,6 +206,41 @@
     <section class="caixa">
       <h2>Bebidas e molhos cadastrados</h2>
       <div id="lista-adicionais" class="lista-pratos">
+        <p>Carregando...</p>
+      </div>
+    </section>
+
+    <!-- cupons de desconto usados no carrinho do site -->
+    <section class="caixa">
+      <h2>Cupons de desconto</h2>
+      <form id="form-cupom" class="form-prato">
+
+        <div class="campo">
+          <label>Código do cupom</label>
+          <input type="text" id="cupom-codigo" required maxlength="20" placeholder="Ex: MIAU10" style="text-transform:uppercase;">
+        </div>
+
+        <div class="linha-dois-campos">
+          <div class="campo">
+            <label>Tipo de desconto</label>
+            <select id="cupom-tipo">
+              <option value="percentual">Percentual (%)</option>
+              <option value="fixo">Valor fixo (R$)</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Valor do desconto</label>
+            <input type="number" id="cupom-valor" step="0.01" min="0" required placeholder="Ex: 10">
+          </div>
+        </div>
+
+        <p class="msg-form" id="msg-cupom-admin"></p>
+
+        <div class="botoes-form">
+          <button type="submit" class="btn-principal">Criar cupom</button>
+        </div>
+      </form>
+      <div id="lista-cupons" class="lista-pratos" style="margin-top:18px;">
         <p>Carregando...</p>
       </div>
     </section>
