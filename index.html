@@ -112,6 +112,8 @@
       <button class="aba-btn ativa" data-aba="burgers">🍔 Burgers</button>
       <button class="aba-btn" data-aba="espetinhos">🍢 Espetinhos</button>
       <button class="aba-btn" data-aba="bebidas">🥤 Bebidas</button>
+      <button class="aba-btn" data-aba="combos-espeto">🍱 Combos de espeto</button>
+      <button class="aba-btn" data-aba="combos-burger">🍔🍟 Combos de burger</button>
     </div>
 
     <div class="grade-cardapio reveal">
@@ -126,6 +128,14 @@
 
       <div class="grupo-pratos" id="bebidas">
         <p style="color:var(--creme-fraco);font-size:14px;">Carregando bebidas...</p>
+      </div>
+
+      <div class="grupo-pratos" id="combos-espeto">
+        <p style="color:var(--creme-fraco);font-size:14px;">Carregando combos...</p>
+      </div>
+
+      <div class="grupo-pratos" id="combos-burger">
+        <p style="color:var(--creme-fraco);font-size:14px;">Carregando combos...</p>
       </div>
 
     </div>
@@ -224,6 +234,23 @@
     <h3 id="modal-nome"></h3>
     <p id="modal-descricao"></p>
     <div class="modal-preco" id="modal-preco"></div>
+
+    <!-- escolha dos itens do combo montavel (so aparece pra combo com qtd_itens > 0) -->
+    <div class="modal-adicional" id="bloco-itens-combo" style="display:none;">
+      <span class="modal-adicional-titulo">
+        <span id="titulo-itens-combo"></span>
+        <span class="contador-itens" id="contador-itens-combo"></span>
+      </span>
+      <div class="chips-adicionais" id="chips-itens-combo"></div>
+    </div>
+
+    <!-- toggle da jantinha (so aparece pra combo com tem_jantinha) -->
+    <div class="modal-adicional" id="bloco-jantinha" style="display:none;">
+      <span class="modal-adicional-titulo">Jantinha</span>
+      <div class="chips-adicionais">
+        <button type="button" class="chip" id="chip-jantinha"></button>
+      </div>
+    </div>
 
     <div class="modal-adicional" id="bloco-bebida" style="display:none;">
       <span class="modal-adicional-titulo">Escolha sua bebida</span>

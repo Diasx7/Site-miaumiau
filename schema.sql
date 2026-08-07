@@ -287,3 +287,16 @@ using (auth.role() = 'authenticated');
 -- ========================================================
 
 alter table configuracoes add column taxa_entrega numeric default 0;
+
+
+-- ========================================================
+-- CAMPOS NOVOS NA TABELA COMBOS (combo montavel)
+-- tipo: se o combo é de espetinho ou de burger
+-- qtd_itens: quantos itens o cliente escolhe (0 = combo fixo)
+-- tem_jantinha / preco_jantinha: opcao de jantinha no combo
+-- ========================================================
+
+alter table combos add column tipo text not null default 'espeto' check (tipo in ('espeto','burger'));
+alter table combos add column qtd_itens int not null default 0;
+alter table combos add column tem_jantinha boolean not null default false;
+alter table combos add column preco_jantinha numeric not null default 0;

@@ -144,6 +144,30 @@
           <input type="number" id="combo-preco" step="0.01" min="0" required placeholder="49.90">
         </div>
 
+        <div class="linha-dois-campos">
+          <div class="campo">
+            <label>Tipo do combo</label>
+            <select id="combo-tipo">
+              <option value="espeto">Combo de espeto</option>
+              <option value="burger">Combo de burger</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label>Quantos itens o cliente escolhe (0 = combo fixo)</label>
+            <input type="number" id="combo-qtd-itens" min="0" step="1" value="0">
+          </div>
+        </div>
+
+        <div class="campo campo-checkbox">
+          <label><input type="checkbox" id="combo-tem-jantinha"> Oferece jantinha</label>
+        </div>
+
+        <!-- so aparece quando o checkbox da jantinha ta marcado -->
+        <div class="campo" id="campo-preco-jantinha" style="display:none;">
+          <label>Preço da jantinha (R$, deixa 0 se for inclusa no combo)</label>
+          <input type="number" id="combo-preco-jantinha" step="0.01" min="0" value="0">
+        </div>
+
         <div class="campo campo-checkbox">
           <label><input type="checkbox" id="combo-disponivel" checked> Disponível no site</label>
         </div>

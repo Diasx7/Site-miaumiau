@@ -299,6 +299,7 @@
   .abas{
     display:flex;
     justify-content:center;
+    flex-wrap: wrap; /* no desktop, se nao couber, quebra centralizado */
     gap: 10px;
     margin: 34px 0 36px;
   }
@@ -337,10 +338,12 @@
     transition: border-color .2s ease, transform .2s ease;
   }
   .prato:hover{ border-color: var(--laranja); transform: translateY(-3px); }
+  /* foto centralizada, na largura toda do card (os cantos de cima acompanham o card por causa do overflow:hidden) */
   .prato-foto{
     width: 100%;
-    height: 160px;
+    height: 200px;
     object-fit: cover;
+    object-position: center;
     display: block;
   }
   .prato-linha{
@@ -357,6 +360,13 @@
     color: var(--amarelo);
     font-size:15px;
     white-space:nowrap;
+  }
+
+  /* descricao que aparece nos cards de combo do cardapio */
+  .prato-desc{
+    padding: 0 20px 18px;
+    font-size: 13px;
+    color: var(--creme-fraco);
   }
 
   .obs-cardapio{
@@ -622,6 +632,36 @@
   .chip.chip-selecionado{ border-color: var(--laranja); background: rgba(255,122,41,.12); }
   .chip.chip-selecionado small{ color: var(--amarelo); }
 
+  /* ===== chips de montar o combo (badge de quantidade e botao de diminuir) ===== */
+  .chip-badge{
+    font-family: var(--fonte-preco);
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--amarelo);
+  }
+  .chip-menos{
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.12);
+    color: var(--creme);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    line-height: 1;
+  }
+  .chip-menos:hover{ background: var(--vermelho); }
+  /* chip travado quando ja escolheu todos os itens do combo */
+  .chip-bloqueado{ opacity: .4; cursor: not-allowed; }
+  /* contador tipo "2 de 2 escolhidos" ao lado do titulo do bloco */
+  .contador-itens{
+    font-family: var(--fonte-preco);
+    font-size: 12px;
+    color: var(--amarelo);
+    margin-left: 8px;
+  }
+
   /* ===== rodape do modal: total, codigo do pedido e botao do whatsapp ===== */
   .modal-rodape{ margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.08); }
   .modal-total{
@@ -754,6 +794,16 @@
     .combo-banner{ justify-content:center; text-align:center; }
     .combo-preco{ text-align:center; }
 
+    /* no mobile as abas viram uma fileira unica com scroll horizontal */
+    .abas{
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 4px;
+    }
+    .aba-btn{ white-space: nowrap; flex-shrink: 0; }
+
     /* menu mobile: fica escondido (max-height 0) ate ganhar a classe "aberto" */
     nav{
       display:block;
@@ -798,6 +848,9 @@
     .modal-caixa{ padding:20px; max-height:95vh; }
     .modal-fechar{ width:44px; height:44px; top:8px; right:8px; font-size:20px; }
     #modal-foto{ height:180px; }
+
+    /* fotos dos cards um pouco mais baixas no celular */
+    .prato-foto{ height:180px; }
 
     /* rodape com total/codigo/botao fica fixo visivel embaixo do modal, mesmo rolando o conteudo */
     .modal-rodape{

@@ -344,6 +344,14 @@ const msgCombo = document.getElementById('msg-combo');
 
 let editandoComboId = null; // quando nao for null, o formulario esta editando esse combo
 
+const checkTemJantinha = document.getElementById('combo-tem-jantinha');
+const campoPrecoJantinha = document.getElementById('campo-preco-jantinha');
+
+// o campo de preco da jantinha so aparece com o checkbox marcado
+checkTemJantinha.addEventListener('change', function(){
+  campoPrecoJantinha.style.display = checkTemJantinha.checked ? 'block' : 'none';
+});
+
 // busca todos os combos (disponiveis ou nao) pra mostrar na lista do painel
 async function carregarListaCombos(){
   listaCombos.innerHTML = '<p>Carregando...</p>';
@@ -359,10 +367,11 @@ async function carregarListaCombos(){
   }
 
   listaCombos.innerHTML = data.map(function(c){
+    const tipoTexto = c.tipo === 'burger' ? 'Combo de burger' : 'Combo de espeto';
     return '<div class="item-lista">' +
       '<div class="item-info">' +
         '<strong>' + escapeHtml(c.nome) + '</strong>' +
-        '<span>R$ ' + Number(c.preco).toFixed(2).replace('.', ',') + '</span>' +
+        '<span>' + tipoTexto + ' · R$ ' + Number(c.preco).toFixed(2).replace('.', ',') + '</span>' +
       '</div>' +
       '<div class="item-acoes">' +
         '<button class="btn-mini ' + (c.disponivel ? 'ok' : 'esgotado') + '" data-acao="toggle-combo" data-id="' + c.id + '" data-disp="' + c.disponivel + '">' +
@@ -408,6 +417,11 @@ function carregarComboNoFormulario(combo){
   document.getElementById('combo-nome').value = combo.nome;
   document.getElementById('combo-descricao').value = combo.descricao || '';
   document.getElementById('combo-preco').value = combo.preco;
+  document.getElementById('combo-tipo').value = combo.tipo || 'espeto';
+  document.getElementById('combo-qtd-itens').value = combo.qtd_itens || 0;
+  checkTemJantinha.checked = combo.tem_jantinha || false;
+  document.getElementById('combo-preco-jantinha').value = combo.preco_jantinha || 0;
+  campoPrecoJantinha.style.display = checkTemJantinha.checked ? 'block' : 'none';
   document.getElementById('combo-disponivel').checked = combo.disponivel;
   btnCancelarCombo.style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -421,6 +435,9 @@ function limparFormularioCombo(){
   editandoComboId = null;
   tituloFormCombo.textContent = 'Adicionar combo novo';
   formCombo.reset();
+  document.getElementById('combo-qtd-itens').value = 0;
+  document.getElementById('combo-preco-jantinha').value = 0;
+  campoPrecoJantinha.style.display = 'none';
   document.getElementById('combo-disponivel').checked = true;
   btnCancelarCombo.style.display = 'none';
 }
@@ -433,6 +450,11 @@ formCombo.addEventListener('submit', async function(e){
   const nome = document.getElementById('combo-nome').value.trim();
   const descricao = document.getElementById('combo-descricao').value.trim();
   const preco = parseFloat(document.getElementById('combo-preco').value);
+  const tipo = document.getElementById('combo-tipo').value;
+  const qtdItens = parseInt(document.getElementById('combo-qtd-itens').value) || 0;
+  const temJantinha = checkTemJantinha.checked;
+  // se nao oferece jantinha, o preco dela fica zerado no banco
+  const precoJantinha = temJantinha ? (parseFloat(document.getElementById('combo-preco-jantinha').value) || 0) : 0;
   const disponivel = document.getElementById('combo-disponivel').checked;
 
   if(!nome || isNaN(preco)){
@@ -440,7 +462,16 @@ formCombo.addEventListener('submit', async function(e){
     return;
   }
 
-  const dadosCombo = { nome: nome, descricao: descricao, preco: preco, disponivel: disponivel };
+  const dadosCombo = {
+    nome: nome,
+    descricao: descricao,
+    preco: preco,
+    tipo: tipo,
+    qtd_itens: qtdItens,
+    tem_jantinha: temJantinha,
+    preco_jantinha: precoJantinha,
+    disponivel: disponivel
+  };
 
   let resultado;
   if(editandoComboId){

@@ -62,6 +62,14 @@ document.querySelector('.grade-cardapio').addEventListener('click', function(e){
     return;
   }
 
+  // card de combo (das abas de combos) abre o modal montavel
+  const cartaoCombo = e.target.closest('[data-combo-id]');
+  if(cartaoCombo){
+    const combo = combosDisponiveis.find(function(c){ return String(c.id) === cartaoCombo.dataset.comboId; });
+    if(combo) abrirModalPedido(combo, true);
+    return;
+  }
+
   const cartao = e.target.closest('.prato');
   if(!cartao) return;
   const prato = cachePratos.find(function(p){ return String(p.id) === cartao.dataset.id; });
@@ -82,12 +90,21 @@ const blocoMolho = document.getElementById('bloco-molho');
 const chipsMolho = document.getElementById('chips-molho');
 const modalTotalValor = document.getElementById('modal-total-valor');
 const btnAdicionarCarrinho = document.getElementById('btn-adicionar-carrinho');
+const blocoItensCombo = document.getElementById('bloco-itens-combo');
+const tituloItensCombo = document.getElementById('titulo-itens-combo');
+const contadorItensCombo = document.getElementById('contador-itens-combo');
+const chipsItensCombo = document.getElementById('chips-itens-combo');
+const blocoJantinha = document.getElementById('bloco-jantinha');
+const chipJantinha = document.getElementById('chip-jantinha');
 
 let bebidasDisponiveis = [];
 let molhosDisponiveis = [];
 let bebidaSelecionada = null; // null = "sem bebida"
 let molhoSelecionado = null; // null = "sem molho"
 let itemAtual = null; // prato ou combo que esta aberto no modal
+let comboAberto = false; // true quando o modal esta mostrando um combo montavel
+let itensComboEscolhidos = {}; // id do prato -> quantidade escolhida no combo
+let jantinhaMarcada = false;
 let whatsappNumero = ''; // vem da tabela configuracoes
 let taxaEntrega = 0; // vem da tabela configuracoes
 
@@ -171,9 +188,87 @@ chipsMolho.addEventListener('click', function(e){
   atualizarTotal();
 });
 
-// soma prato/combo + bebida + molho e atualiza o total mostrado no modal
+// ===== MONTAGEM DO COMBO (escolher os N itens e a jantinha) =====
+
+// pratos que podem entrar no combo (espetinhos ou burgers, conforme o tipo do combo)
+function pratosDoCombo(){
+  const categoria = itemAtual.tipo === 'burger' ? 'burger' : 'espetinho';
+  return cachePratos.filter(function(p){ return p.categoria === categoria; });
+}
+
+// soma quantos itens ja foram escolhidos no combo
+function totalItensEscolhidos(){
+  let total = 0;
+  Object.keys(itensComboEscolhidos).forEach(function(id){ total += itensComboEscolhidos[id]; });
+  return total;
+}
+
+// desenha os chips dos itens do combo, com badge de quantidade e botao de diminuir
+function desenhaChipsCombo(){
+  const escolhidos = totalItensEscolhidos();
+  const completo = escolhidos >= itemAtual.qtd_itens;
+
+  chipsItensCombo.innerHTML = pratosDoCombo().map(function(p){
+    const qtd = itensComboEscolhidos[p.id] || 0;
+    let classes = 'chip';
+    if(qtd > 0) classes += ' chip-selecionado';
+    if(completo && qtd === 0) classes += ' chip-bloqueado'; // ja escolheu tudo, esse chip trava
+    let dentro = escapeHtml(p.nome);
+    if(qtd > 0){
+      // o "menos" diminui, e o badge mostra quantas vezes o item foi escolhido
+      dentro = '<span class="chip-menos" data-id="' + p.id + '">−</span> ' + dentro + ' <span class="chip-badge">' + qtd + 'x</span>';
+    }
+    return '<button type="button" class="' + classes + '" data-id="' + p.id + '">' + dentro + '</button>';
+  }).join('');
+
+  contadorItensCombo.textContent = escolhidos + ' de ' + itemAtual.qtd_itens + ' escolhidos';
+  atualizarBotaoAdicionar();
+}
+
+// clique nos chips do combo: no "menos" diminui, no resto do chip aumenta (se ainda couber)
+chipsItensCombo.addEventListener('click', function(e){
+  const menos = e.target.closest('.chip-menos');
+  if(menos){
+    const id = menos.dataset.id;
+    itensComboEscolhidos[id] -= 1;
+    if(itensComboEscolhidos[id] <= 0) delete itensComboEscolhidos[id];
+    desenhaChipsCombo();
+    return;
+  }
+
+  const chip = e.target.closest('.chip');
+  if(!chip) return;
+  if(totalItensEscolhidos() >= itemAtual.qtd_itens) return; // ja escolheu todos os itens
+  const id = chip.dataset.id;
+  itensComboEscolhidos[id] = (itensComboEscolhidos[id] || 0) + 1;
+  desenhaChipsCombo();
+});
+
+// toggle da jantinha: marca/desmarca e soma no total se for paga
+chipJantinha.addEventListener('click', function(){
+  jantinhaMarcada = !jantinhaMarcada;
+  chipJantinha.classList.toggle('chip-selecionado', jantinhaMarcada);
+  atualizarTotal();
+});
+
+// o botao de adicionar so libera quando o cliente escolheu os N itens do combo
+function atualizarBotaoAdicionar(){
+  if(comboAberto && itemAtual.qtd_itens > 0){
+    const escolhidos = totalItensEscolhidos();
+    if(escolhidos < itemAtual.qtd_itens){
+      btnAdicionarCarrinho.disabled = true;
+      btnAdicionarCarrinho.textContent = 'Escolha os itens (' + escolhidos + ' de ' + itemAtual.qtd_itens + ')';
+      return;
+    }
+  }
+  btnAdicionarCarrinho.disabled = false;
+  btnAdicionarCarrinho.textContent = 'Adicionar ao carrinho';
+}
+
+// soma prato/combo + jantinha + bebida + molho e atualiza o total mostrado no modal
 function atualizarTotal(){
   let total = Number(itemAtual.preco);
+  if(comboAberto && jantinhaMarcada) total += Number(itemAtual.preco_jantinha || 0);
   if(bebidaSelecionada) total += Number(bebidaSelecionada.preco);
   if(molhoSelecionado) total += Number(molhoSelecionado.preco);
   modalTotalValor.textContent = formatarPreco(total);
@@ -182,15 +277,54 @@ function atualizarTotal(){
 // botao do modal: joga o prato/combo com os opcionais escolhidos no carrinho e fecha
 btnAdicionarCarrinho.addEventListener('click', function(){
   const opcionais = [];
+
+  // no combo, os itens montados e a jantinha entram como opcionais (aparecem no carrinho e no whatsapp)
+  if(comboAberto){
+    Object.keys(itensComboEscolhidos).forEach(function(id){
+      const prato = cachePratos.find(function(p){ return String(p.id) === String(id); });
+      if(!prato) return;
+      const qtd = itensComboEscolhidos[id];
+      opcionais.push({ nome: (qtd > 1 ? qtd + 'x ' : '') + prato.nome, preco: 0 });
+    });
+    if(jantinhaMarcada) opcionais.push({ nome: 'Jantinha', preco: Number(itemAtual.preco_jantinha || 0) });
+  }
+
   if(bebidaSelecionada) opcionais.push({ nome: bebidaSelecionada.nome, preco: Number(bebidaSelecionada.preco) });
   if(molhoSelecionado) opcionais.push({ nome: molhoSelecionado.nome, preco: Number(molhoSelecionado.preco) });
   adicionarAoCarrinho(itemAtual.nome, Number(itemAtual.preco), opcionais);
   fecharModalPedido();
 });
 
-// abre o modal de pedido pra um prato ou um combo (os dois usam { nome, preco, descricao, foto_url })
-function abrirModalPedido(item){
+// abre o modal de pedido pra um prato ou um combo (ehCombo = true liga a parte montavel)
+function abrirModalPedido(item, ehCombo){
   itemAtual = item;
+  comboAberto = !!ehCombo;
+  itensComboEscolhidos = {};
+  jantinhaMarcada = false;
+
+  // bloco de escolher os N itens do combo
+  if(comboAberto && item.qtd_itens > 0){
+    const nomeItem = item.tipo === 'burger' ? 'burger' : 'espetinho';
+    tituloItensCombo.textContent = item.qtd_itens === 1
+      ? 'Escolha seu ' + nomeItem
+      : 'Escolha seus ' + item.qtd_itens + ' ' + nomeItem + 's';
+    blocoItensCombo.style.display = 'block';
+    desenhaChipsCombo();
+  } else {
+    blocoItensCombo.style.display = 'none';
+  }
+
+  // toggle da jantinha (mostra o preco ou "Incluída")
+  if(comboAberto && item.tem_jantinha){
+    const precoJant = Number(item.preco_jantinha || 0);
+    chipJantinha.innerHTML = precoJant > 0
+      ? 'Jantinha <small>+ ' + formatarPreco(precoJant) + '</small>'
+      : 'Jantinha <small>Incluída</small>';
+    chipJantinha.classList.remove('chip-selecionado');
+    blocoJantinha.style.display = 'block';
+  } else {
+    blocoJantinha.style.display = 'none';
+  }
 
   if(item.foto_url){
     modalFoto.src = item.foto_url;
@@ -221,6 +355,7 @@ function abrirModalPedido(item){
   }
 
   atualizarTotal();
+  atualizarBotaoAdicionar();
 
   modalPrato.classList.add('aberto');
 }
@@ -596,15 +731,22 @@ async function carregarCombos(){
   if(error){
     console.error('erro ao buscar combos', error);
     secaoCombo.style.display = 'none';
+    desenhaGrupoCombos('combos-espeto', []);
+    desenhaGrupoCombos('combos-burger', []);
     return;
   }
+
+  combosDisponiveis = data;
+
+  // preenche as abas de combos do cardapio, separadas pelo tipo
+  desenhaGrupoCombos('combos-espeto', data.filter(function(c){ return c.tipo === 'espeto'; }));
+  desenhaGrupoCombos('combos-burger', data.filter(function(c){ return c.tipo === 'burger'; }));
 
   if(data.length === 0){
     secaoCombo.style.display = 'none';
     return;
   }
 
-  combosDisponiveis = data;
   indiceComboAtual = 0;
   desenhaCombo(0);
 
@@ -621,6 +763,27 @@ async function carregarCombos(){
   }
 }
 
+// desenha os cards de combo de uma aba do cardapio (nome, descricao e preco)
+function desenhaGrupoCombos(idGrupo, combos){
+  const container = document.getElementById(idGrupo);
+  if(!container) return;
+
+  if(combos.length === 0){
+    container.innerHTML = '<p style="color:var(--creme-fraco);font-size:14px;">Nenhum combo disponível no momento.</p>';
+    return;
+  }
+
+  container.innerHTML = combos.map(function(c){
+    return '<div class="prato" data-combo-id="' + c.id + '">' +
+      '<div class="prato-linha">' +
+        '<div class="prato-nome">' + escapeHtml(c.nome) + '</div>' +
+        '<div class="prato-preco">' + formatarPreco(c.preco) + '</div>' +
+      '</div>' +
+      (c.descricao ? '<p class="prato-desc">' + escapeHtml(c.descricao) + '</p>' : '') +
+    '</div>';
+  }).join('');
+}
+
 // desenha o combo de um indice dentro do banner
 function desenhaCombo(indice){
   const banner = document.getElementById('combo-banner');
@@ -634,10 +797,10 @@ function desenhaCombo(indice){
     '<div class="combo-preco">R$ ' + Number(c.preco).toFixed(2).replace('.', ',') + '</div>';
 }
 
-// clique no banner abre o modal de pedido com o combo que ta sendo mostrado
+// clique no banner abre o modal montavel com o combo que ta sendo mostrado
 document.getElementById('combo-banner').addEventListener('click', function(){
   if(combosDisponiveis.length === 0) return;
-  abrirModalPedido(combosDisponiveis[indiceComboAtual]);
+  abrirModalPedido(combosDisponiveis[indiceComboAtual], true);
 });
 
 // deixa o numero de whatsapp bonitinho: 5534999999999 -> (34) 99999-9999
