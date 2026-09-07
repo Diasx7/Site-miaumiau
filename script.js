@@ -1040,15 +1040,42 @@ async function carregarConfiguracoes(){
     linhaInsta.style.display = 'none';
   }
 
-  // mapa: se tiver o iframe preenchido, troca o bloco fake pela moldura com o mapa de verdade
-  if(data.mapa_embed){
+  // mapa: monta o iframe aqui no codigo, usando a URL do banco so no src.
+  // nada de jogar html do banco na pagina - isso abriria brecha pra codigo estranho rodar no site.
+  const urlMapa = urlSeguraDoMapa(data.mapa_embed);
+  if(urlMapa){
     const mapaFake = document.querySelector('.mapa-fake');
     if(mapaFake){
       mapaFake.classList.remove('mapa-fake');
       mapaFake.classList.add('mapa-moldura');
-      mapaFake.innerHTML = data.mapa_embed;
+      mapaFake.textContent = ''; // tira o placeholder de dentro da moldura
+
+      const iframe = document.createElement('iframe');
+      iframe.src = urlMapa;
+      iframe.title = 'Mapa de onde a gente fica';
+      iframe.loading = 'lazy';
+      iframe.setAttribute('allowfullscreen', '');
+      iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+      mapaFake.appendChild(iframe);
     }
   }
+}
+
+// endereco que todo mapa aceito tem que ter no comeco (trava no proprio google)
+const INICIO_URL_MAPA = 'https://www.google.com/maps/embed';
+
+// devolve a URL do mapa so se ela for mesmo do embed do google, senao devolve vazio
+// (ai o site simplesmente nao mostra mapa nenhum, em vez de mostrar coisa de fora).
+// enquanto o banco ainda tiver o iframe antigo salvo, pega so o endereco de dentro do src
+// - isso e leitura de texto, nunca renderiza o html do banco. da pra tirar depois da migracao.
+function urlSeguraDoMapa(valorSalvo){
+  if(!valorSalvo) return '';
+  let texto = String(valorSalvo).trim();
+  if(texto.charAt(0) === '<'){
+    const achou = texto.match(/src="([^"]*)"/i) || texto.match(/src='([^']*)'/i);
+    texto = achou ? achou[1].trim() : '';
+  }
+  return texto.indexOf(INICIO_URL_MAPA) === 0 ? texto : '';
 }
 
 // busca o cardapio, fotos, combos, adicionais, avaliacoes e configuracoes assim que a pagina carrega

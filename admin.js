@@ -124,7 +124,7 @@ function carregarNoFormulario(prato){
   tituloForm.textContent = 'Editar item';
   document.getElementById('campo-nome').value = prato.nome;
   document.getElementById('campo-descricao').value = prato.descricao || '';
-  document.getElementById('campo-preco').value = prato.preco;
+  document.getElementById('campo-preco').value = escreverPreco(prato.preco);
   document.getElementById('campo-categoria').value = prato.categoria;
   document.getElementById('campo-disponivel').checked = prato.disponivel;
   btnCancelarEdicao.style.display = 'inline-block';
@@ -150,13 +150,17 @@ formPrato.addEventListener('submit', async function(e){
 
   const nome = document.getElementById('campo-nome').value.trim();
   const descricao = document.getElementById('campo-descricao').value.trim();
-  const preco = parseFloat(document.getElementById('campo-preco').value);
+  const preco = lerPreco('campo-preco');
   const categoria = document.getElementById('campo-categoria').value;
   const disponivel = document.getElementById('campo-disponivel').checked;
   const arquivoFoto = document.getElementById('campo-foto').files[0];
 
-  if(!nome || isNaN(preco)){
+  if(!nome){
     msgForm.textContent = 'Preenche pelo menos o nome e o preço.';
+    return;
+  }
+  if(isNaN(preco) || preco < 0){
+    msgForm.textContent = 'Preço inválido. Usa só números, tipo 29,90.';
     return;
   }
 
@@ -201,10 +205,51 @@ function escapeHtml(texto){
   return div.innerHTML;
 }
 
+// ===== PRECOS DIGITADOS COM VIRGULA =====
+
+// le um campo de preco aceitando virgula ou ponto: "29,90" e "29.90" viram 29.9.
+// campo vazio devolve o padraoSeVazio (ou NaN se ninguem passar um padrao).
+// devolve NaN quando tem letra ou simbolo estranho, pra quem chamou poder avisar.
+function lerPreco(id, padraoSeVazio){
+  let texto = document.getElementById(id).value.trim();
+  if(texto === ''){
+    return padraoSeVazio === undefined ? NaN : padraoSeVazio;
+  }
+  // se tem virgula, ela e o separador decimal - entao os pontos sao de milhar e saem fora
+  if(texto.indexOf(',') !== -1){
+    texto = texto.replace(/\./g, '');
+  }
+  texto = texto.replace(',', '.');
+  if(!/^-?\d+(\.\d+)?$/.test(texto)) return NaN;
+  return parseFloat(texto);
+}
+
+// deixa o preco que veio do banco no formato brasileiro pro formulario: 29.9 -> "29,90"
+function escreverPreco(valor){
+  return Number(valor || 0).toFixed(2).replace('.', ',');
+}
+
 // ===== INFORMACOES DO SITE (configuracoes) =====
 
 const formConfig = document.getElementById('form-config');
 const msgConfig = document.getElementById('msg-config');
+
+// toda URL de mapa aceita tem que comecar com isso (trava o endereco no proprio google)
+const INICIO_URL_MAPA = 'https://www.google.com/maps/embed';
+
+// MIGRACAO DO MAPA: o banco pode ter o iframe inteiro salvo (formato antigo).
+// aqui a gente le so o endereco de dentro do src="..." e devolve ele sozinho.
+// isso e leitura de texto, nunca joga o html do banco na pagina.
+// se ja estiver no formato novo (so a URL), devolve do jeito que veio.
+function extrairUrlDoMapa(valorSalvo){
+  if(!valorSalvo) return '';
+  let texto = String(valorSalvo).trim();
+  if(texto.charAt(0) === '<'){
+    const achou = texto.match(/src="([^"]*)"/i) || texto.match(/src='([^']*)'/i);
+    texto = achou ? achou[1].trim() : '';
+  }
+  return texto;
+}
 
 // busca a linha de configuracoes (id = 1) e preenche o formulario
 async function carregarConfiguracoes(){
@@ -219,18 +264,42 @@ async function carregarConfiguracoes(){
   document.getElementById('config-whatsapp').value = data.whatsapp || '';
   document.getElementById('config-telefone').value = data.telefone || '';
   document.getElementById('config-endereco').value = data.endereco || '';
-  document.getElementById('config-taxa-entrega').value = data.taxa_entrega || 0;
+  document.getElementById('config-taxa-entrega').value = escreverPreco(data.taxa_entrega);
   document.getElementById('config-horario-semana').value = data.horario_semana || '';
   document.getElementById('config-horario-fds').value = data.horario_fds || '';
   document.getElementById('config-dia-folga').value = data.dia_folga || '';
   document.getElementById('config-instagram').value = data.instagram || '';
   document.getElementById('config-facebook').value = data.facebook || '';
-  document.getElementById('config-mapa-embed').value = data.mapa_embed || '';
+  // mapa: mostra sempre so a URL. se o banco ainda tiver o iframe antigo, converte na hora
+  // pro dono conferir - o banco so muda quando ele clicar em "Salvar informações".
+  const mapaSalvo = data.mapa_embed || '';
+  const mapaUrl = extrairUrlDoMapa(mapaSalvo);
+  document.getElementById('config-mapa-embed').value = mapaUrl;
+
+  if(mapaSalvo.trim().charAt(0) === '<'){
+    msgConfig.textContent = mapaUrl.indexOf(INICIO_URL_MAPA) === 0
+      ? 'O link do mapa foi convertido pro formato novo. Confere e clica em "Salvar informações" pra gravar.'
+      : 'Não consegui converter o mapa antigo. Pega o link novo no Google Maps e cola aqui.';
+  }
 }
 
 // salva as informacoes do site (sempre atualiza a linha id = 1)
 formConfig.addEventListener('submit', async function(e){
   e.preventDefault();
+
+  // o campo do mapa aceita so a URL de embed do google, nada de codigo html
+  const urlMapa = document.getElementById('config-mapa-embed').value.trim();
+  if(urlMapa && urlMapa.indexOf(INICIO_URL_MAPA) !== 0){
+    msgConfig.textContent = 'Link do mapa inválido. Tem que ser o endereço que começa com ' + INICIO_URL_MAPA + ' — no Google Maps: Compartilhar > Incorporar um mapa, e copia só o que está dentro do src="...".';
+    return;
+  }
+
+  const taxa = lerPreco('config-taxa-entrega', 0);
+  if(isNaN(taxa) || taxa < 0){
+    msgConfig.textContent = 'Taxa de entrega inválida. Usa só números, tipo 5,00.';
+    return;
+  }
+
   msgConfig.textContent = 'Salvando...';
 
   const dadosConfig = {
@@ -238,13 +307,13 @@ formConfig.addEventListener('submit', async function(e){
     whatsapp: document.getElementById('config-whatsapp').value.trim(),
     telefone: document.getElementById('config-telefone').value.trim(),
     endereco: document.getElementById('config-endereco').value.trim(),
-    taxa_entrega: parseFloat(document.getElementById('config-taxa-entrega').value) || 0,
+    taxa_entrega: taxa,
     horario_semana: document.getElementById('config-horario-semana').value.trim(),
     horario_fds: document.getElementById('config-horario-fds').value.trim(),
     dia_folga: document.getElementById('config-dia-folga').value.trim(),
     instagram: document.getElementById('config-instagram').value.trim(),
     facebook: document.getElementById('config-facebook').value.trim(),
-    mapa_embed: document.getElementById('config-mapa-embed').value.trim()
+    mapa_embed: urlMapa
   };
 
   const { error } = await sb.from('configuracoes').update(dadosConfig).eq('id', 1);
@@ -416,11 +485,11 @@ function carregarComboNoFormulario(combo){
   tituloFormCombo.textContent = 'Editar combo';
   document.getElementById('combo-nome').value = combo.nome;
   document.getElementById('combo-descricao').value = combo.descricao || '';
-  document.getElementById('combo-preco').value = combo.preco;
+  document.getElementById('combo-preco').value = escreverPreco(combo.preco);
   document.getElementById('combo-tipo').value = combo.tipo || 'espeto';
   document.getElementById('combo-qtd-itens').value = combo.qtd_itens || 0;
   checkTemJantinha.checked = combo.tem_jantinha || false;
-  document.getElementById('combo-preco-jantinha').value = combo.preco_jantinha || 0;
+  document.getElementById('combo-preco-jantinha').value = escreverPreco(combo.preco_jantinha);
   campoPrecoJantinha.style.display = checkTemJantinha.checked ? 'block' : 'none';
   document.getElementById('combo-disponivel').checked = combo.disponivel;
   btnCancelarCombo.style.display = 'inline-block';
@@ -449,16 +518,24 @@ formCombo.addEventListener('submit', async function(e){
 
   const nome = document.getElementById('combo-nome').value.trim();
   const descricao = document.getElementById('combo-descricao').value.trim();
-  const preco = parseFloat(document.getElementById('combo-preco').value);
+  const preco = lerPreco('combo-preco');
   const tipo = document.getElementById('combo-tipo').value;
   const qtdItens = parseInt(document.getElementById('combo-qtd-itens').value) || 0;
   const temJantinha = checkTemJantinha.checked;
   // se nao oferece jantinha, o preco dela fica zerado no banco
-  const precoJantinha = temJantinha ? (parseFloat(document.getElementById('combo-preco-jantinha').value) || 0) : 0;
+  const precoJantinha = temJantinha ? lerPreco('combo-preco-jantinha', 0) : 0;
   const disponivel = document.getElementById('combo-disponivel').checked;
 
-  if(!nome || isNaN(preco)){
+  if(!nome){
     msgCombo.textContent = 'Preenche pelo menos o nome e o preço.';
+    return;
+  }
+  if(isNaN(preco) || preco < 0){
+    msgCombo.textContent = 'Preço inválido. Usa só números, tipo 49,90.';
+    return;
+  }
+  if(isNaN(precoJantinha) || precoJantinha < 0){
+    msgCombo.textContent = 'Preço da jantinha inválido. Usa só números, tipo 5,00.';
     return;
   }
 
@@ -565,7 +642,7 @@ function carregarAdicionalNoFormulario(adicional){
   tituloFormAdicional.textContent = 'Editar item';
   document.getElementById('adicional-nome').value = adicional.nome;
   document.getElementById('adicional-tipo').value = adicional.tipo;
-  document.getElementById('adicional-preco').value = adicional.preco;
+  document.getElementById('adicional-preco').value = escreverPreco(adicional.preco);
   document.getElementById('adicional-disponivel').checked = adicional.disponivel;
   btnCancelarAdicional.style.display = 'inline-block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -591,11 +668,15 @@ formAdicional.addEventListener('submit', async function(e){
 
   const nome = document.getElementById('adicional-nome').value.trim();
   const tipo = document.getElementById('adicional-tipo').value;
-  const preco = parseFloat(document.getElementById('adicional-preco').value);
+  const preco = lerPreco('adicional-preco', 0);
   const disponivel = document.getElementById('adicional-disponivel').checked;
 
-  if(!nome || isNaN(preco)){
+  if(!nome){
     msgAdicional.textContent = 'Preenche pelo menos o nome e o preço.';
+    return;
+  }
+  if(isNaN(preco) || preco < 0){
+    msgAdicional.textContent = 'Preço inválido. Usa só números, tipo 6,50 (ou 0 se for grátis).';
     return;
   }
 
@@ -687,10 +768,14 @@ formCupom.addEventListener('submit', async function(e){
 
   const codigo = document.getElementById('cupom-codigo').value.trim().toUpperCase();
   const tipo = document.getElementById('cupom-tipo').value;
-  const valor = parseFloat(document.getElementById('cupom-valor').value);
+  const valor = lerPreco('cupom-valor');
 
-  if(!codigo || isNaN(valor) || valor <= 0){
+  if(!codigo){
     msgCupomAdmin.textContent = 'Preenche o código e um valor maior que zero.';
+    return;
+  }
+  if(isNaN(valor) || valor <= 0){
+    msgCupomAdmin.textContent = 'Valor do desconto inválido. Usa só números maiores que zero, tipo 10 ou 5,50.';
     return;
   }
 

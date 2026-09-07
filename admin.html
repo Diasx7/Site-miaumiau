@@ -64,7 +64,7 @@
 
         <div class="campo">
           <label>Taxa de entrega (R$, deixa 0 se não cobrar)</label>
-          <input type="number" id="config-taxa-entrega" step="0.01" min="0" placeholder="Ex: 5.00">
+          <input type="text" inputmode="decimal" id="config-taxa-entrega" placeholder="Ex: 5,00">
         </div>
 
         <div class="linha-dois-campos">
@@ -94,8 +94,8 @@
         </div>
 
         <div class="campo">
-          <label>Mapa (cola o código do iframe do Google Maps)</label>
-          <textarea id="config-mapa-embed" rows="3" placeholder='<iframe src="..."></iframe>'></textarea>
+          <label>Link do mapa (URL do embed do Google Maps)</label>
+          <input type="text" id="config-mapa-embed" placeholder="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767...">
         </div>
 
         <p class="msg-form" id="msg-config"></p>
@@ -141,7 +141,7 @@
 
         <div class="campo">
           <label>Preço (R$)</label>
-          <input type="number" id="combo-preco" step="0.01" min="0" required placeholder="49.90">
+          <input type="text" inputmode="decimal" id="combo-preco" required placeholder="49,90">
         </div>
 
         <div class="linha-dois-campos">
@@ -165,7 +165,7 @@
         <!-- so aparece quando o checkbox da jantinha ta marcado -->
         <div class="campo" id="campo-preco-jantinha" style="display:none;">
           <label>Preço da jantinha (R$, deixa 0 se for inclusa no combo)</label>
-          <input type="number" id="combo-preco-jantinha" step="0.01" min="0" value="0">
+          <input type="text" inputmode="decimal" id="combo-preco-jantinha" value="0" placeholder="Ex: 5,00">
         </div>
 
         <div class="campo campo-checkbox">
@@ -209,7 +209,7 @@
           </div>
           <div class="campo">
             <label>Preço (R$, deixa 0 se for grátis)</label>
-            <input type="number" id="adicional-preco" step="0.01" min="0" value="0" required>
+            <input type="text" inputmode="decimal" id="adicional-preco" value="0" required placeholder="Ex: 6,50">
           </div>
         </div>
 
@@ -254,7 +254,7 @@
           </div>
           <div class="campo">
             <label>Valor do desconto</label>
-            <input type="number" id="cupom-valor" step="0.01" min="0" required placeholder="Ex: 10">
+            <input type="text" inputmode="decimal" id="cupom-valor" required placeholder="Ex: 10 ou 5,50">
           </div>
         </div>
 
@@ -302,7 +302,7 @@
         <div class="linha-dois-campos">
           <div class="campo">
             <label>Preço (R$)</label>
-            <input type="number" id="campo-preco" step="0.01" min="0" required placeholder="29.90">
+            <input type="text" inputmode="decimal" id="campo-preco" required placeholder="29,90">
           </div>
           <div class="campo">
             <label>Categoria</label>
